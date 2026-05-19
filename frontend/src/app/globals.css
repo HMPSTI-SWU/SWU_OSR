@@ -2,177 +2,100 @@
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  :root {
-    --primary: 210 100% 30%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 174 62% 40%;
-    --secondary-foreground: 0 0% 100%;
-    --accent: 210 40% 96%;
-    --accent-foreground: 210 100% 30%;
-    --muted: 210 20% 96%;
-    --muted-foreground: 215 16% 47%;
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-    --border: 214 20% 90%;
-    --ring: 210 100% 30%;
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 142 76% 36%;
-    --warning: 38 92% 50%;
-  }
-}
+/*
+ * SWISS DESIGN SYSTEM — Millennium Science School
+ * International Typographic Style
+ * No gradients. No shadows. No decoration.
+ * Only type, color, and grid.
+ */
 
 @layer base {
+  :root {
+    --millennium-cyan: #00BCD4;
+    --millennium-cyan-dark: #0097A7;
+    --millennium-blue: #0D47A1;
+    --millennium-black: #0A0A0A;
+    --millennium-slate: #1E293B;
+    --millennium-slate-mid: #334155;
+    --millennium-white: #FFFFFF;
+    --millennium-off-white: #FAFAFA;
+    --millennium-border: #E2E8F0;
+  }
+
   * {
-    @apply border-gray-200;
+    border-color: var(--millennium-border);
   }
 
   body {
-    @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))];
+    background-color: var(--millennium-white);
+    color: var(--millennium-black);
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Swiss Design: extreme type hierarchy */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    line-height: 1.1;
   }
 }
 
 @layer components {
-  .gradient-primary {
-    @apply bg-gradient-to-r from-[hsl(210,100%,30%)] to-[hsl(174,62%,40%)];
+  /* Stat block — sharp, blocky, no rounding */
+  .stat-block {
+    @apply bg-white border-l-4 border-l-millennium-cyan p-6;
+    border-top: 1px solid var(--millennium-border);
+    border-right: 1px solid var(--millennium-border);
+    border-bottom: 1px solid var(--millennium-border);
   }
 
-  .gradient-primary-subtle {
-    @apply bg-gradient-to-br from-[hsl(210,100%,95%)] via-white to-[hsl(174,62%,95%)];
+  .stat-block-value {
+    @apply text-4xl font-black text-millennium-black tracking-tight leading-none;
   }
 
-  .gradient-card {
-    @apply bg-gradient-to-br from-white to-[hsl(210,20%,98%)];
+  .stat-block-label {
+    @apply text-sm font-medium text-millennium-slate-mid uppercase tracking-wider mt-2;
   }
 
-  .glass-card {
-    @apply bg-white/80 backdrop-blur-sm border border-gray-200/60 shadow-sm;
+  /* Swiss card — flat, no shadow, minimal border */
+  .swiss-card {
+    @apply bg-white border border-millennium-border;
   }
 
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-out;
+  /* Primary action — solid cyan */
+  .btn-primary {
+    @apply bg-millennium-cyan text-white font-semibold px-6 py-3 text-sm uppercase tracking-wider;
+    @apply hover:bg-millennium-cyan-dark transition-colors duration-150;
   }
 
-  .animate-slide-up {
-    animation: slideUp 0.5s ease-out;
+  /* Outline action */
+  .btn-outline {
+    @apply border-2 border-millennium-black text-millennium-black font-semibold px-6 py-3 text-sm uppercase tracking-wider;
+    @apply hover:bg-millennium-black hover:text-white transition-colors duration-150;
   }
 
-  .animate-slide-down {
-    animation: slideDown 0.3s ease-out;
+  /* Badge — stark outline or solid */
+  .badge-solid {
+    @apply inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider;
+    @apply bg-millennium-cyan text-white;
   }
 
-  .animate-scale-in {
-    animation: scaleIn 0.3s ease-out;
-  }
-
-  .animate-pulse-soft {
-    animation: pulseSoft 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-
-  .hover-lift {
-    @apply transition-all duration-200 hover:-translate-y-1 hover:shadow-md;
-  }
-
-  .hover-glow {
-    @apply transition-all duration-200 hover:shadow-lg hover:shadow-blue-100;
-  }
-}
-
-@layer utilities {
-  .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-[hsl(210,100%,30%)] to-[hsl(174,62%,40%)];
+  .badge-outline {
+    @apply inline-flex items-center px-3 py-1 text-xs font-bold uppercase tracking-wider;
+    @apply border-2 border-millennium-slate text-millennium-slate;
   }
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes pulseSoft {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.7;
-  }
-}
-
-/* Contribution heatmap styles */
-.heatmap-cell {
-  @apply rounded-sm transition-all duration-150;
-}
-
-.heatmap-level-0 {
-  @apply bg-gray-100;
-}
-
-.heatmap-level-1 {
-  @apply bg-teal-200;
-}
-
-.heatmap-level-2 {
-  @apply bg-teal-400;
-}
-
-.heatmap-level-3 {
-  @apply bg-teal-600;
-}
-
-.heatmap-level-4 {
-  @apply bg-teal-800;
-}
-
-/* Custom scrollbar */
+/* Custom scrollbar — minimal */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100 rounded-full;
+  background: var(--millennium-off-white);
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full hover:bg-gray-400;
+  background: var(--millennium-slate-mid);
 }

@@ -39,16 +39,16 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 border-b border-gray-200/80 bg-white/90 backdrop-blur-md">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <nav className="sticky top-0 z-50 border-b border-millennium-border bg-white">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             {/* Logo */}
-            <div className="flex items-center gap-8">
-              <Link href="/" className="flex items-center gap-2 group">
-                <div className="h-8 w-8 rounded-lg gradient-primary flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-                  <Code2 className="h-4 w-4 text-white" />
+            <div className="flex items-center gap-10">
+              <Link href="/" className="flex items-center gap-3 group">
+                <div className="h-8 w-8 bg-millennium-cyan flex items-center justify-center">
+                  <Code2 className="h-4 w-4 text-white" strokeWidth={2.5} />
                 </div>
-                <span className="text-lg font-bold text-gradient hidden sm:inline">
+                <span className="text-base font-black text-millennium-black tracking-tight hidden sm:inline">
                   SWU OSR
                 </span>
               </Link>
@@ -57,18 +57,16 @@ export function Navbar() {
               <div className="hidden md:flex items-center gap-1">
                 {NAV_LINKS.map((link) => {
                   if (link.auth && !user) return null;
-                  const Icon = link.icon;
                   return (
                     <Link
                       key={link.href}
                       href={link.href}
-                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                      className={`px-4 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
                         isActive(link.href)
-                          ? "bg-primary-50 text-primary-700"
-                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                          ? "text-millennium-cyan"
+                          : "text-millennium-slate hover:text-millennium-black"
                       }`}
                     >
-                      <Icon className="h-4 w-4" />
                       {link.label}
                     </Link>
                   );
@@ -83,7 +81,7 @@ export function Navbar() {
                   <NotificationBell />
                   <DropdownMenu
                     trigger={
-                      <div className="flex items-center gap-2 cursor-pointer p-1 rounded-full hover:bg-gray-50 transition-colors">
+                      <div className="flex items-center gap-2 cursor-pointer p-1 hover:opacity-70 transition-opacity">
                         <Avatar
                           src={user.avatar_url}
                           alt={user.alias}
@@ -93,11 +91,11 @@ export function Navbar() {
                       </div>
                     }
                   >
-                    <div className="px-3 py-2 border-b border-gray-100 max-w-[200px]">
-                      <p className="text-sm font-medium text-gray-900 break-words">
+                    <div className="px-3 py-2 border-b border-millennium-border max-w-[200px]">
+                      <p className="text-sm font-extrabold text-millennium-black break-words">
                         {user.alias}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">{user.nim}</p>
+                      <p className="text-xs text-millennium-slate-mid">{user.nim}</p>
                     </div>
                     <DropdownMenuItem>
                       <Link
@@ -130,10 +128,7 @@ export function Navbar() {
                 </>
               ) : (
                 <Link href="/login">
-                  <Button
-                    size="sm"
-                    className="gradient-primary text-white border-0 shadow-sm hover:shadow-md transition-shadow"
-                  >
+                  <Button size="sm">
                     Sign In
                   </Button>
                 </Link>
@@ -142,7 +137,7 @@ export function Navbar() {
               {/* Mobile hamburger */}
               <button
                 onClick={() => setMobileOpen(!mobileOpen)}
-                className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                className="md:hidden p-2 text-millennium-black hover:text-millennium-cyan transition-colors"
                 aria-label="Toggle menu"
               >
                 {mobileOpen ? (
@@ -158,44 +153,40 @@ export function Navbar() {
 
       {/* Mobile slide-down menu */}
       {mobileOpen && (
-        <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-white border-b border-gray-200 shadow-lg animate-slide-down">
-          <div className="px-4 py-3 space-y-1">
+        <div className="md:hidden fixed inset-x-0 top-16 z-40 bg-white border-b border-millennium-border">
+          <div className="px-6 py-4 space-y-1">
             {NAV_LINKS.map((link) => {
               if (link.auth && !user) return null;
-              const Icon = link.icon;
               return (
                 <Link
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-all ${
+                  className={`block px-4 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${
                     isActive(link.href)
-                      ? "bg-primary-50 text-primary-700"
-                      : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                      ? "text-millennium-cyan"
+                      : "text-millennium-slate hover:text-millennium-black"
                   }`}
                 >
-                  <Icon className="h-5 w-5" />
                   {link.label}
                 </Link>
               );
             })}
             {user && (
               <>
-                <div className="border-t border-gray-100 my-2" />
+                <div className="border-t border-millennium-border my-2" />
                 <Link
                   href={`/profiles/${user.alias}`}
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  className="block px-4 py-3 text-sm font-bold uppercase tracking-wider text-millennium-slate hover:text-millennium-black"
                 >
-                  <User className="h-5 w-5" />
-                  My Profile
+                  Profile
                 </Link>
                 <Link
                   href="/settings"
                   onClick={() => setMobileOpen(false)}
-                  className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50"
+                  className="block px-4 py-3 text-sm font-bold uppercase tracking-wider text-millennium-slate hover:text-millennium-black"
                 >
-                  <Settings className="h-5 w-5" />
                   Settings
                 </Link>
               </>
@@ -207,7 +198,7 @@ export function Navbar() {
       {/* Overlay for mobile menu */}
       {mobileOpen && (
         <div
-          className="md:hidden fixed inset-0 top-16 z-30 bg-black/20 backdrop-blur-sm"
+          className="md:hidden fixed inset-0 top-16 z-30 bg-black/10"
           onClick={() => setMobileOpen(false)}
         />
       )}
