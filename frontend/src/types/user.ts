@@ -6,6 +6,7 @@ export interface User {
   alias: string;
   bio: string;
   avatar_url: string;
+  banner_url: string;
   github_username: string;
   role: Role;
   created_at: string;
@@ -26,6 +27,7 @@ export interface PublicProfile {
   alias: string;
   bio: string;
   avatar_url: string;
+  banner_url: string;
   github_username: string;
   role: Role;
   showcase_repos: import("./showcase").ShowcaseRepo[];

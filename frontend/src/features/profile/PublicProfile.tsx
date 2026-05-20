@@ -111,9 +111,20 @@ export function PublicProfile({ alias }: PublicProfileProps) {
     <div className="space-y-6 animate-fade-in">
       {/* Profile Header */}
       <Card>
-        {/* Gradient banner */}
-        <div className="h-24 gradient-primary relative rounded-t-lg overflow-hidden">
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoLTJ2LTZoMnptMC0xMHY2aC0ydi02aDJ6bTAtMTB2NmgtMlY0aDJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+        {/* Banner — custom upload or default gradient */}
+        <div className="h-32 sm:h-40 relative rounded-t-lg overflow-hidden">
+          {profile.banner_url ? (
+            profile.banner_url.endsWith(".mp4") || profile.banner_url.endsWith(".webm") ? (
+              <video src={profile.banner_url} className="w-full h-full object-cover" autoPlay loop muted playsInline />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.banner_url} alt={`${profile.alias}'s banner`} className="w-full h-full object-cover" />
+            )
+          ) : (
+            <div className="w-full h-full gradient-primary relative">
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0djZoLTJ2LTZoMnptMC0xMHY2aC0ydi02aDJ6bTAtMTB2NmgtMlY0aDJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+            </div>
+          )}
         </div>
         <CardContent className="px-6 pb-6 -mt-12">
           <div className="flex flex-col sm:flex-row items-start gap-4">

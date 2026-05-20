@@ -27,6 +27,7 @@ type User struct {
 	Alias          string     `json:"alias"`
 	Bio            string     `json:"bio"`
 	AvatarURL      string     `json:"avatar_url"`
+	BannerURL      string     `json:"banner_url"`
 	GitHubUsername string     `json:"github_username"`
 	GitHubID       int64      `json:"-"`
 	GitHubToken    string     `json:"-"`

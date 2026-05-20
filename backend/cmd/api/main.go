@@ -108,6 +108,12 @@ func main() {
 	// Wire aggregator into showcase for auto-sync on repo add
 	showcaseSvc.SetAggregatorService(aggregatorSvc)
 
+	// Initialize banner upload directory
+	bannerUploadDir := "/data/uploads/banners"
+	if err := os.MkdirAll(bannerUploadDir, 0755); err != nil {
+		logger.Fatal("failed to create banner upload directory", zap.Error(err))
+	}
+
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authSvc, cfg.CookieSecure)
 	profileHandler := handler.NewProfileHandler(profileSvc)
@@ -116,6 +122,7 @@ func main() {
 	forumHandler := handler.NewForumHandler(forumSvc)
 	communityHandler := handler.NewCommunityHandler(pool)
 	leaderboardHandler := handler.NewLeaderboardHandler(cachedLeaderboardSvc)
+	bannerHandler := handler.NewBannerHandler(userRepo, bannerUploadDir)
 
 	// Set up router
 	r := chi.NewRouter()
@@ -125,7 +132,6 @@ func main() {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
-	r.Use(mw.MaxBodySize(1 << 20)) // 1MB global request body size limit
 	r.Use(mw.CORS(cfg.CORSOrigin))
 
 	// Rate limiter (IP-only applied globally)
@@ -137,8 +143,19 @@ func main() {
 		handler.RespondJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 	})
 
+	// Serve uploaded banner files (public, static)
+	fileServer := http.StripPrefix("/uploads/banners/", http.FileServer(http.Dir(bannerUploadDir)))
+	r.Get("/uploads/banners/*", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+		w.Header().Set("X-Content-Type-Options", "nosniff")
+		fileServer.ServeHTTP(w, r)
+	})
+
 	// API route groups
 	r.Route("/api", func(r chi.Router) {
+		// Apply 1MB body limit to all API routes EXCEPT banner upload
+		r.Use(mw.MaxBodySize(1 << 20))
+
 		// Public routes (no auth)
 		r.Group(func(r chi.Router) {
 			r.Get("/profiles/{alias}", profileHandler.HandleGetPublicProfile)
@@ -169,12 +186,13 @@ func main() {
 			})
 		})
 
-		// Protected routes (auth required)
+		// Protected routes (auth required, 1MB body limit inherited from parent)
 		r.Group(func(r chi.Router) {
 			r.Use(mw.JWTAuth(cfg.JWTSecret))
 			r.Use(rateLimiter.UserMiddleware)
 
 			r.Put("/profile", profileHandler.HandleUpdateProfile)
+			r.Delete("/profile/banner", bannerHandler.HandleDeleteBanner)
 			r.Get("/profiles/{alias}/identity", profileHandler.HandleGetRealIdentity)
 			r.Get("/repos/available", showcaseHandler.HandleGetAvailableRepos)
 			r.Post("/showcase", showcaseHandler.HandleSetShowcase)
@@ -188,6 +206,13 @@ func main() {
 			r.Put("/notifications/{id}/read", forumHandler.HandleMarkNotificationRead)
 			r.Get("/leaderboard/me", leaderboardHandler.HandleGetMyPoints)
 		})
+	})
+
+	// Banner upload route — OUTSIDE the /api group's 1MB MaxBodySize.
+	// Has its own 10MB limit applied inside the handler itself.
+	r.Route("/api/profile", func(r chi.Router) {
+		r.Use(mw.JWTAuth(cfg.JWTSecret))
+		r.Post("/banner", bannerHandler.HandleUploadBanner)
 	})
 
 	// Start leaderboard refresh scheduler (every 15 minutes)

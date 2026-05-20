@@ -18,6 +18,7 @@ type PublicProfile struct {
 	Alias          string               `json:"alias"`
 	Bio            string               `json:"bio"`
 	AvatarURL      string               `json:"avatar_url"`
+	BannerURL      string               `json:"banner_url"`
 	GitHubUsername string               `json:"github_username"`
 	Role           domain.Role          `json:"role"`
 	ShowcaseRepos  []domain.ShowcaseRepo `json:"showcase_repos"`
@@ -110,6 +111,7 @@ func (s *profileService) GetPublicProfile(ctx context.Context, alias string) (*P
 		Alias:          user.Alias,
 		Bio:            user.Bio,
 		AvatarURL:      user.AvatarURL,
+		BannerURL:      user.BannerURL,
 		GitHubUsername: user.GitHubUsername,
 		Role:           user.Role,
 		ShowcaseRepos:  repos,
@@ -352,6 +354,7 @@ func (s *profileService) ListMembers(ctx context.Context) ([]*PublicProfile, err
 			Alias:          user.Alias,
 			Bio:            user.Bio,
 			AvatarURL:      user.AvatarURL,
+			BannerURL:      user.BannerURL,
 			GitHubUsername: user.GitHubUsername,
 			Role:           user.Role,
 			ShowcaseRepos:  repos,
