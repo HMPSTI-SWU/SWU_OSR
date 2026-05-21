@@ -20,10 +20,11 @@ type OAuthToken struct {
 
 // GitHubUser represents a GitHub user profile.
 type GitHubUser struct {
-	ID        int64  `json:"id"`
-	Login     string `json:"login"`
-	AvatarURL string `json:"avatar_url"`
-	Name      string `json:"name"`
+	ID              int64  `json:"id"`
+	Login           string `json:"login"`
+	AvatarURL       string `json:"avatar_url"`
+	Name            string `json:"name"`
+	PublicRepos     int    `json:"public_repos"`
 }
 
 // Repository represents a GitHub repository.
@@ -45,6 +46,7 @@ type Service interface {
 	GetAuthorizationURL(state string) string
 	ExchangeCode(ctx context.Context, code string) (*OAuthToken, error)
 	GetUser(ctx context.Context, token string) (*GitHubUser, error)
+	GetUserProfile(ctx context.Context, token, username string) (*GitHubUser, error)
 	ListRepos(ctx context.Context, token string) ([]Repository, error)
 	RegisterWebhook(ctx context.Context, token, owner, repo, webhookURL, secret string) (int64, error)
 	RemoveWebhook(ctx context.Context, token, owner, repo string, hookID int64) error
@@ -147,6 +149,38 @@ func (s *service) GetUser(ctx context.Context, token string) (*GitHubUser, error
 	var user GitHubUser
 	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
 		return nil, fmt.Errorf("decoding user response: %w", err)
+	}
+
+	return &user, nil
+}
+
+// GetUserProfile fetches a GitHub user's public profile by username.
+// This provides public_repos count and other profile metadata.
+func (s *service) GetUserProfile(ctx context.Context, token, username string) (*GitHubUser, error) {
+	reqURL := fmt.Sprintf("https://api.github.com/users/%s", username)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("creating user profile request: %w", err)
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	req.Header.Set("Accept", "application/vnd.github+json")
+
+	resp, err := s.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetching user profile: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("get user profile failed with status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var user GitHubUser
+	if err := json.NewDecoder(resp.Body).Decode(&user); err != nil {
+		return nil, fmt.Errorf("decoding user profile response: %w", err)
 	}
 
 	return &user, nil

@@ -452,8 +452,9 @@ func encodeCursor(t time.Time) string {
 	return base64.StdEncoding.EncodeToString([]byte(t.Format(time.RFC3339Nano)))
 }
 
-// SyncUserActivity fetches recent public events from GitHub for the user's
-// showcase repos and inserts any new activity into the feed.
+// SyncUserActivity fetches recent public events from GitHub for the user
+// and inserts any new activity into the feed. Also updates the user's
+// public repos count from their GitHub profile.
 func (s *aggregatorService) SyncUserActivity(ctx context.Context, userID uuid.UUID) (int, error) {
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
@@ -470,6 +471,16 @@ func (s *aggregatorService) SyncUserActivity(ctx context.Context, userID uuid.UU
 		decrypted, err := Decrypt(user.GitHubToken, s.encryptionKey)
 		if err == nil {
 			token = decrypted
+		}
+	}
+
+	// Fetch user's GitHub profile to update public repos count
+	ghProfile, err := s.githubSvc.GetUserProfile(ctx, token, user.GitHubUsername)
+	if err == nil && ghProfile != nil {
+		if ghProfile.PublicRepos != user.PublicReposCount {
+			user.PublicReposCount = ghProfile.PublicRepos
+			user.UpdatedAt = time.Now()
+			_ = s.userRepo.Update(ctx, user)
 		}
 	}
 

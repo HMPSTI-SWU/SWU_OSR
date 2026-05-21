@@ -73,6 +73,9 @@ func (m *mockGitHubService) GetUserPublicEvents(_ context.Context, _, _ string) 
 func (m *mockGitHubService) GetRepoCommits(_ context.Context, _, _, _ string, _ int) ([]github.Commit, error) {
 	return nil, nil
 }
+func (m *mockGitHubService) GetUserProfile(_ context.Context, _, _ string) (*github.GitHubUser, error) {
+	return &github.GitHubUser{}, nil
+}
 
 // mockUserRepo is a mock for domain.UserRepository.
 type mockUserRepo struct {

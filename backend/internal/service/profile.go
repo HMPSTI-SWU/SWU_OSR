@@ -211,19 +211,58 @@ func (s *profileService) GetRealIdentity(ctx context.Context, requesterID uuid.U
 	}, nil
 }
 
-// GetUserStats computes activity statistics for a user using only local DB data.
-// Performance: Removed all real-time GitHub API calls. Data is populated by background sync
-// (SyncUserActivity) and webhook processing, so the DB always has fresh data.
-// This reduces profile load from 5-20s to <50ms.
+// GetUserStats computes activity statistics for a user using local DB data
+// and the user's GitHub profile metadata (public repos count).
+// Performance: No real-time GitHub API calls at request time. Data is populated
+// by background sync (SyncUserActivity) and webhook processing.
 func (s *profileService) GetUserStats(ctx context.Context, userID uuid.UUID) (*UserStats, error) {
-	repos, err := s.showcaseRepo.GetByUserID(ctx, userID)
+	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Collect languages from showcase repos (already stored in DB from sync)
+	// Get activity feed from local DB — this covers ALL public GitHub activity
+	// (not just showcase repos) because SyncUserActivity fetches from /users/{name}/events/public
+	feed, err := s.activityRepo.GetUserFeed(ctx, userID, time.Now().Add(time.Second), 1000)
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect languages from all repos in activity logs (not just showcase)
 	langSet := make(map[string]struct{})
-	for _, r := range repos {
+	repoNames := make(map[string]struct{})
+	totalCommits := 0
+	daySet := make(map[string]struct{})
+	dayCount := make(map[string]int)
+
+	for _, item := range feed {
+		if item.EventType == domain.EventPush {
+			totalCommits++
+		}
+		day := item.CreatedAt.Format("2006-01-02")
+		daySet[day] = struct{}{}
+		dayCount[day]++
+
+		// Track unique repo names from all activity
+		if item.RepoFullName != "" {
+			repoNames[item.RepoFullName] = struct{}{}
+		}
+	}
+
+	// Also include languages from showcase repos (which have language metadata stored)
+	showcaseRepos, err := s.showcaseRepo.GetByUserID(ctx, userID)
+	if err == nil {
+		for _, r := range showcaseRepos {
+			if r.Language != "" {
+				langSet[r.Language] = struct{}{}
+			}
+		}
+	}
+
+	// Try to extract languages from activity repos by checking showcase metadata
+	// For repos that appear in activity but aren't in showcase, we note them
+	// but can only get language info from repos we have metadata for
+	for _, r := range showcaseRepos {
 		if r.Language != "" {
 			langSet[r.Language] = struct{}{}
 		}
@@ -234,26 +273,12 @@ func (s *profileService) GetUserStats(ctx context.Context, userID uuid.UUID) (*U
 		languages = append(languages, l)
 	}
 
-	// Get activity feed from local DB to compute commit stats
-	feed, err := s.activityRepo.GetUserFeed(ctx, userID, time.Now().Add(time.Second), 1000)
-	if err != nil {
-		return nil, err
+	// Total repos = user's public repos count from GitHub profile (updated during sync)
+	// Falls back to number of unique repos seen in activity if not yet synced
+	totalRepos := user.PublicReposCount
+	if totalRepos == 0 {
+		totalRepos = len(repoNames)
 	}
-
-	totalCommits := 0
-	daySet := make(map[string]struct{})
-	dayCount := make(map[string]int)
-	for _, item := range feed {
-		if item.EventType == domain.EventPush {
-			totalCommits++
-		}
-		day := item.CreatedAt.Format("2006-01-02")
-		daySet[day] = struct{}{}
-		dayCount[day]++
-	}
-
-	// Total repos = showcase repos count (GitHub total is not meaningful here)
-	totalRepos := len(repos)
 
 	// Calculate streak from activity days
 	streak := 0

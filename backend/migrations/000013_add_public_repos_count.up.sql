@@ -1,0 +1,1 @@
+ALTER TABLE users ADD COLUMN public_repos_count INT NOT NULL DEFAULT 0;

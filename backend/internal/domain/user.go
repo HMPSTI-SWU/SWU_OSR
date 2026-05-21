@@ -19,23 +19,24 @@ const (
 // Fields marked json:"-" are never serialized in API responses to prevent
 // leaking sensitive data (tokens, PII). Use dedicated DTOs for responses.
 type User struct {
-	ID             uuid.UUID  `json:"id"`
-	NIM            string     `json:"-"`
-	FullName       string     `json:"-"`
-	Major          string     `json:"-"`
-	Semester       int        `json:"-"`
-	Alias          string     `json:"alias"`
-	Bio            string     `json:"bio"`
-	AvatarURL      string     `json:"avatar_url"`
-	BannerURL      string     `json:"banner_url"`
-	GitHubUsername string     `json:"github_username"`
-	GitHubID       int64      `json:"-"`
-	GitHubToken    string     `json:"-"`
-	Role           Role       `json:"role"`
-	IsActive       bool       `json:"-"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
-	DeletedAt      *time.Time `json:"-"`
+	ID               uuid.UUID  `json:"id"`
+	NIM              string     `json:"-"`
+	FullName         string     `json:"-"`
+	Major            string     `json:"-"`
+	Semester         int        `json:"-"`
+	Alias            string     `json:"alias"`
+	Bio              string     `json:"bio"`
+	AvatarURL        string     `json:"avatar_url"`
+	BannerURL        string     `json:"banner_url"`
+	GitHubUsername   string     `json:"github_username"`
+	GitHubID         int64      `json:"-"`
+	GitHubToken      string     `json:"-"`
+	PublicReposCount int        `json:"-"`
+	Role             Role       `json:"role"`
+	IsActive         bool       `json:"-"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	DeletedAt        *time.Time `json:"-"`
 }
 
 // UserClaims represents JWT claims stored in request context.

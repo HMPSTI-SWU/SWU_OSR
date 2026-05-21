@@ -24,13 +24,13 @@ func NewUserRepo(pool *pgxpool.Pool) domain.UserRepository {
 func (r *UserRepo) Create(ctx context.Context, user *domain.User) error {
 	query := `
 		INSERT INTO users (id, nim, full_name, major, semester, alias, bio, avatar_url, banner_url,
-			github_username, github_id, github_token, role, is_active, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`
+			github_username, github_id, github_token, public_repos_count, role, is_active, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.NIM, user.FullName, user.Major, user.Semester,
 		user.Alias, user.Bio, user.AvatarURL, user.BannerURL,
-		user.GitHubUsername, user.GitHubID, user.GitHubToken,
+		user.GitHubUsername, user.GitHubID, user.GitHubToken, user.PublicReposCount,
 		string(user.Role), user.IsActive, user.CreatedAt, user.UpdatedAt,
 	)
 	return err
@@ -38,7 +38,7 @@ func (r *UserRepo) Create(ctx context.Context, user *domain.User) error {
 
 // userColumns is the common SELECT column list for user queries.
 const userColumns = `id, nim, full_name, major, semester, alias, bio, avatar_url, banner_url,
-	github_username, github_id, github_token, role, is_active, created_at, updated_at`
+	github_username, github_id, github_token, public_repos_count, role, is_active, created_at, updated_at`
 
 // GetByID retrieves a user by their UUID.
 func (r *UserRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
@@ -69,14 +69,14 @@ func (r *UserRepo) Update(ctx context.Context, user *domain.User) error {
 	query := `
 		UPDATE users
 		SET full_name = $2, major = $3, semester = $4, alias = $5, bio = $6, avatar_url = $7,
-			banner_url = $8, github_username = $9, github_id = $10, github_token = $11, role = $12,
-			is_active = $13, updated_at = $14
+			banner_url = $8, github_username = $9, github_id = $10, github_token = $11,
+			public_repos_count = $12, role = $13, is_active = $14, updated_at = $15
 		WHERE id = $1 AND deleted_at IS NULL`
 
 	_, err := r.pool.Exec(ctx, query,
 		user.ID, user.FullName, user.Major, user.Semester, user.Alias, user.Bio, user.AvatarURL,
-		user.BannerURL, user.GitHubUsername, user.GitHubID, user.GitHubToken, string(user.Role),
-		user.IsActive, user.UpdatedAt,
+		user.BannerURL, user.GitHubUsername, user.GitHubID, user.GitHubToken, user.PublicReposCount,
+		string(user.Role), user.IsActive, user.UpdatedAt,
 	)
 	return err
 }
@@ -109,7 +109,7 @@ func (r *UserRepo) ListAll(ctx context.Context) ([]*domain.User, error) {
 			&user.ID, &user.NIM, &user.FullName, &user.Major, &user.Semester,
 			&user.Alias, &user.Bio, &user.AvatarURL, &user.BannerURL,
 			&user.GitHubUsername, &user.GitHubID, &user.GitHubToken,
-			&role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt,
+			&user.PublicReposCount, &role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -129,7 +129,7 @@ func (r *UserRepo) scanUser(ctx context.Context, query string, args ...interface
 		&user.ID, &user.NIM, &user.FullName, &user.Major, &user.Semester,
 		&user.Alias, &user.Bio, &user.AvatarURL, &user.BannerURL,
 		&user.GitHubUsername, &user.GitHubID, &user.GitHubToken,
-		&role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt,
+		&user.PublicReposCount, &role, &user.IsActive, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
