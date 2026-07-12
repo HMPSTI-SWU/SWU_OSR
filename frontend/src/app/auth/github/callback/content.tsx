@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useGitHubCallback } from "@/hooks/useAuth";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useGitHubCallback } from '@/hooks/useAuth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function GitHubCallbackContent() {
   const searchParams = useSearchParams();
@@ -13,8 +13,8 @@ export function GitHubCallbackContent() {
 
   useEffect(() => {
     if (calledRef.current) return;
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
 
     if (code && state) {
       calledRef.current = true;
@@ -22,15 +22,15 @@ export function GitHubCallbackContent() {
         { code, state },
         {
           onSuccess: () => {
-            router.push("/dashboard");
+            router.push('/dashboard');
           },
           onError: () => {
-            router.push("/login?error=github_callback_failed");
+            router.push('/login?error=github_callback_failed');
           },
         }
       );
     } else {
-      router.push("/login?error=missing_params");
+      router.push('/login?error=missing_params');
     }
   }, [searchParams, router, callback]);
 

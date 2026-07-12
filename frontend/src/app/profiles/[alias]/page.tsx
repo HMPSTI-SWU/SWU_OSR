@@ -1,4 +1,4 @@
-import { PublicProfile } from "@/features/profile/PublicProfile";
+import { PublicProfile } from '@/features/profile/PublicProfile';
 
 interface ProfilePageProps {
   params: { alias: string };

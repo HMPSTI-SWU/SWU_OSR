@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { ThreadList } from "@/features/forum/ThreadList";
-import { CreateThreadForm } from "@/features/forum/CreateThreadForm";
-import { MessageSquare, ArrowLeft } from "lucide-react";
+import Link from 'next/link';
+import { ThreadList } from '@/features/forum/ThreadList';
+import { CreateThreadForm } from '@/features/forum/CreateThreadForm';
+import { MessageSquare, ArrowLeft } from 'lucide-react';
 
 interface DiscussionsPageProps {
   params: { id: string };

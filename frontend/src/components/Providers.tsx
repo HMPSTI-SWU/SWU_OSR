@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { ThemeProvider } from "next-themes";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ToastProvider } from "@/components/ui/toast";
-import { AuthProvider } from "@/components/AuthProvider";
+import * as React from 'react';
+import { ThemeProvider } from 'next-themes';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ToastProvider } from '@/components/ui/toast';
+import { AuthProvider } from '@/components/AuthProvider';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -21,7 +21,7 @@ function makeQueryClient() {
 let browserQueryClient: QueryClient | undefined = undefined;
 
 function getQueryClient() {
-  if (typeof window === "undefined") {
+  if (typeof window === 'undefined') {
     return makeQueryClient();
   } else {
     if (!browserQueryClient) browserQueryClient = makeQueryClient();

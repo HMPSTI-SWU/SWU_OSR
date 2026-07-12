@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import { getAccessToken, setAccessToken, setSessionId, clearTokens } from "@/lib/auth";
-import { useAuthContext } from "@/components/AuthProvider";
-import type { LoginInput, PendingSession, AuthResult } from "@/types/auth";
-import type { User } from "@/types/user";
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import api from '@/lib/api';
+import { getAccessToken, setAccessToken, setSessionId, clearTokens } from '@/lib/auth';
+import { useAuthContext } from '@/components/AuthProvider';
+import type { LoginInput, PendingSession, AuthResult } from '@/types/auth';
+import type { User } from '@/types/user';
 
 export function useSIAKADLogin() {
   return useMutation({
     mutationFn: async (input: LoginInput) => {
       const { data } = await api.post<{ ok: boolean; data: PendingSession }>(
-        "/auth/siakad-login",
+        '/auth/siakad-login',
         input
       );
       return data.data;
@@ -28,10 +28,10 @@ export function useGitHubCallback() {
 
   return useMutation({
     mutationFn: async (params: { code: string; state: string }) => {
-      const { data } = await api.post<{ ok: boolean; data: AuthResult }>(
-        "/auth/github-callback",
-        { session_id: params.state, code: params.code }
-      );
+      const { data } = await api.post<{ ok: boolean; data: AuthResult }>('/auth/github-callback', {
+        session_id: params.state,
+        code: params.code,
+      });
       return data.data;
     },
     onSuccess: (data) => {
@@ -47,13 +47,13 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      await api.post("/auth/logout");
+      await api.post('/auth/logout');
     },
     onSuccess: () => {
       clearTokens();
       setAuthenticated(false);
       queryClient.clear();
-      window.location.href = "/welcome";
+      window.location.href = '/welcome';
     },
   });
 }
@@ -66,9 +66,9 @@ export function useCurrentUser() {
   const shouldFetch = isReady && isAuthenticated;
 
   return useQuery<User>({
-    queryKey: ["currentUser"],
+    queryKey: ['currentUser'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: User }>("/auth/me");
+      const { data } = await api.get<{ ok: boolean; data: User }>('/auth/me');
       return data.data;
     },
     enabled: shouldFetch,

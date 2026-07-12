@@ -1,10 +1,10 @@
-import axios from "axios";
-import { getAccessToken, setAccessToken, clearTokens } from "./auth";
+import axios from 'axios';
+import { getAccessToken, setAccessToken, clearTokens } from './auth';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '/api',
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
   withCredentials: true,
 });
@@ -35,7 +35,7 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 // URLs that should never trigger token refresh
-const NO_REFRESH_URLS = ["/auth/refresh", "/auth/siakad-login", "/auth/github-callback"];
+const NO_REFRESH_URLS = ['/auth/refresh', '/auth/siakad-login', '/auth/github-callback'];
 
 api.interceptors.response.use(
   (response) => response,
@@ -50,12 +50,7 @@ api.interceptors.response.use(
     const isAuthEndpoint = NO_REFRESH_URLS.some((url) => originalRequest.url?.includes(url));
     const hasToken = !!getAccessToken();
 
-    if (
-      error.response?.status !== 401 ||
-      originalRequest._retry ||
-      isAuthEndpoint ||
-      !hasToken
-    ) {
+    if (error.response?.status !== 401 || originalRequest._retry || isAuthEndpoint || !hasToken) {
       return Promise.reject(error);
     }
 
@@ -73,7 +68,7 @@ api.interceptors.response.use(
 
     try {
       const { data } = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/auth/refresh`,
+        `${process.env.NEXT_PUBLIC_API_URL || '/api'}/auth/refresh`,
         {},
         { withCredentials: true }
       );
@@ -84,12 +79,12 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
       }
-      throw new Error("No token in refresh response");
+      throw new Error('No token in refresh response');
     } catch (refreshError) {
       processQueue(refreshError, null);
       clearTokens();
-      if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        window.location.href = '/login';
       }
       return Promise.reject(refreshError);
     } finally {

@@ -11,8 +11,10 @@ import (
 type Role string
 
 const (
-	RoleStudent Role = "student"
-	RoleFaculty Role = "faculty"
+	RoleStudent    Role = "student"
+	RoleFaculty    Role = "faculty"
+	RoleLPTOfficer Role = "lpt_officer"
+	RoleSuperAdmin Role = "super_admin"
 )
 
 // User is the central identity binding entity.

@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { Suspense } from "react";
-import { GitHubCallbackContent } from "./content";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Suspense } from 'react';
+import { GitHubCallbackContent } from './content';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function GitHubCallbackPage() {
   return (

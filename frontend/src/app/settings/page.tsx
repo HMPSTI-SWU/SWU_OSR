@@ -1,18 +1,12 @@
-"use client";
+'use client';
 
-import { useCurrentUser, useLogout } from "@/hooks/useAuth";
-import { ProfileEditForm } from "@/features/profile/ProfileEditForm";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  ExternalLink,
-  CheckCircle,
-  Settings,
-  Github,
-  GraduationCap,
-  LogOut,
-} from "lucide-react";
+import { useCurrentUser, useLogout } from '@/hooks/useAuth';
+import { ProfileEditForm } from '@/features/profile/ProfileEditForm';
+import { SkillManager } from '@/features/profile/SkillManager';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ExternalLink, CheckCircle, Settings, Github, GraduationCap, LogOut } from 'lucide-react';
 
 export default function SettingsPage() {
   const { data: user } = useCurrentUser();
@@ -40,6 +34,14 @@ export default function SettingsPage() {
             Profile
           </h2>
           <ProfileEditForm />
+        </section>
+
+        {/* Skills section */}
+        <section>
+          <h2 className="text-sm font-semibold text-gray-500 dark:text-white uppercase tracking-wider mb-3">
+            Skills
+          </h2>
+          <SkillManager />
         </section>
 
         {/* GitHub connection */}
@@ -129,7 +131,7 @@ export default function SettingsPage() {
                 className="gap-1.5"
               >
                 <LogOut className="h-3.5 w-3.5" />
-                {logout.isPending ? "..." : "Logout"}
+                {logout.isPending ? '...' : 'Logout'}
               </Button>
             </CardContent>
           </Card>

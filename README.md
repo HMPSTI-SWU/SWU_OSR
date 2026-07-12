@@ -172,24 +172,49 @@ Konfigurasi production menambahkan:
 
 ---
 
-## Sistem Poin & Leaderboard
+## Sistem Poin & Leaderboard (Dynamic Scoring)
 
-| Aktivitas | Poin |
-|-----------|------|
+Sistem poin di SWU OSR menggunakan algoritma **PageRank Lite** dan deteksi anomali untuk memastikan keadilan dan kualitas kontribusi.
+
+### Base Points
+| Aktivitas | Poin Base |
+|-----------|-----------|
 | Push ke repository | 3 |
-| Pull Request dibuka | 5 |
-| Pull Request di-merge | 8 |
-| Menambah showcase repository | 10 |
+| Pull Request dibuka | 2 |
+| Pull Request di-merge | 12 |
+| Showcase repository | 10 |
 | Membuat thread forum | 2 |
 | Memposting komentar | 1 |
-| Streak bonus (7 hari berturut-turut) | 15 |
+| Streak bonus (7 hari) | 20 |
 
-**Proteksi Anti-Gaming:**
-- Maksimum 30 poin per hari per user
-- Maksimum 15 push event per repository per minggu
-- Maksimum 5 PR event per repository per minggu
+### 🌟 Repo Reputation Multiplier
+Poin untuk *Push* dan *Merged PR* dikalikan secara dinamis berdasarkan jumlah Bintang (Stars) GitHub dari repositori tujuan. Kontribusi ke proyek populer (misal 1000+ stars) dapat menghasilkan hingga **5.0x multiplier**. Ini mendorong kualitas kontribusi ke proyek open-source yang berdampak besar.
 
-**Periode Leaderboard:** Weekly, Monthly, Semester, All-Time
+### 🛡️ Anti-Spam & Anomaly Detection (Z-Score)
+Sistem dilengkapi dengan proteksi *anti-gaming* otomatis:
+- Burst activity (spam commit) akan terdeteksi oleh algoritma Z-Score dan otomatis mendapat penalti.
+- Maksimum 30 poin push per hari per user.
+- Caps kuartalan untuk tiap repositori (Maks 90 push & 20 PR merged).
+
+**Periode Leaderboard:** Quarterly (Q1-Q4) & All-Time.
+
+---
+
+## Roadmap & Future Ideas 🚀
+
+Kami menyadari platform ini terus berkembang. Berikut adalah beberapa ide yang direncanakan untuk iterasi selanjutnya:
+
+1. **Brand & Visual Identity**
+   - Mengganti logo dan *branding* sementara dengan identitas visual yang lebih kuat (SVG animasi, ilustrasi 3D) yang mencerminkan nama "ORBIT".
+   - Peningkatan UI/UX untuk *dark mode* dan penambahan mikro-animasi pada komponen utama.
+
+2. **Evolusi Algoritma Leaderboard**
+   - **Quality over Quantity:** Mengintegrasikan alat analitik statis untuk menilai kompleksitas kode (misal: jumlah baris kode yang diubah, efisiensi bahasa pemrograman) sebagai penentu poin, bukan sekadar "jumlah push".
+   - **Bounty System:** Dosen atau senior dapat membuat isu spesifik (Bounty) di platform dengan hadiah poin besar untuk siapa saja yang berhasil memecahkannya.
+
+3. **Rich Badges System (V2)**
+   - Saat ini *badges* sudah memiliki sistem *Multi-Tier* (Iron ke Diamond) berdasarkan statistik (*Night Owl*, *Weekend Warrior*).
+   - Ke depannya: Mengimplementasikan sistem **Achievement Tree** interaktif (seperti *skill tree* di game RPG) untuk memandu kontributor baru (mahasiswa) agar perlahan-lahan berkembang menjadi *maintainer* profesional.
 
 ---
 

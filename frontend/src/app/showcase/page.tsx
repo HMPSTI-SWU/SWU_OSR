@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { RepoSelector } from "@/features/showcase/RepoSelector";
-import { ShowcaseGrid } from "@/features/showcase/ShowcaseGrid";
-import { FolderGit2, Plus } from "lucide-react";
+import { RepoSelector } from '@/features/showcase/RepoSelector';
+import { ShowcaseGrid } from '@/features/showcase/ShowcaseGrid';
+import { FolderGit2, Plus } from 'lucide-react';
 
 export default function ShowcasePage() {
   return (

@@ -1,26 +1,19 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import { resolveUploadUrl, sanitizeUrl } from "@/lib/url";
-import type {
-  PublicProfile as PublicProfileType,
-  AcademicIdentity,
-} from "@/types/user";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogHeader,
-  DialogTitle,
-  DialogContent,
-} from "@/components/ui/dialog";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import api from '@/lib/api';
+import { resolveUploadUrl, sanitizeUrl } from '@/lib/url';
+import type { PublicProfile as PublicProfileType, AcademicIdentity, UserSkill } from '@/types/user';
+import { useCurrentUser } from '@/hooks/useAuth';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogHeader, DialogTitle, DialogContent } from '@/components/ui/dialog';
+import { SkillSection } from './SkillSection';
 import {
   ExternalLink,
   MessageSquare,
@@ -31,9 +24,9 @@ import {
   Calendar,
   Flame,
   Eye,
-} from "lucide-react";
-import { ContributionHeatmap } from "./ContributionHeatmap";
-import { BadgeDisplay } from "./BadgeDisplay";
+} from 'lucide-react';
+import { ContributionHeatmap } from './ContributionHeatmap';
+import { BadgeDisplay } from './BadgeDisplay';
 
 interface PublicProfileProps {
   alias: string;
@@ -41,7 +34,7 @@ interface PublicProfileProps {
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 }
 
 export function PublicProfile({ alias }: PublicProfileProps) {
@@ -55,7 +48,7 @@ export function PublicProfile({ alias }: PublicProfileProps) {
     isLoading,
     isError,
   } = useQuery<PublicProfileType>({
-    queryKey: ["profile", alias],
+    queryKey: ['profile', alias],
     queryFn: async () => {
       const { data } = await api.get<{ ok: boolean; data: PublicProfileType }>(
         `/profiles/${alias}`
@@ -63,6 +56,20 @@ export function PublicProfile({ alias }: PublicProfileProps) {
       return data.data;
     },
   });
+
+  // Fetch skills for this profile
+  const { data: skills, refetch: refetchSkills } = useQuery<UserSkill[]>({
+    queryKey: ['skills', profile?.id],
+    queryFn: async () => {
+      const { data } = await api.get<{ ok: boolean; data: UserSkill[] }>(
+        `/users/${profile!.id}/skills`
+      );
+      return data.data ?? [];
+    },
+    enabled: !!profile?.id,
+  });
+
+  const isOwnProfile = !!currentUser && currentUser.alias === alias;
 
   const handleViewIdentity = async () => {
     setIdentityLoading(true);
@@ -116,7 +123,7 @@ export function PublicProfile({ alias }: PublicProfileProps) {
         <div className="h-32 sm:h-40 relative rounded-t-lg overflow-hidden">
           {profile.banner_url ? (
             // Custom banner (image or video)
-            profile.banner_url.endsWith(".mp4") || profile.banner_url.endsWith(".webm") ? (
+            profile.banner_url.endsWith('.mp4') || profile.banner_url.endsWith('.webm') ? (
               <video
                 src={sanitizeUrl(resolveUploadUrl(profile.banner_url))}
                 className="w-full h-full object-cover"
@@ -158,9 +165,9 @@ export function PublicProfile({ alias }: PublicProfileProps) {
                   <div className="flex items-center gap-2 mt-1 flex-wrap">
                     <Badge
                       className={`${
-                        profile.role === "faculty"
-                          ? "bg-orange-50 text-orange-700 border-orange-200"
-                          : "bg-primary-50 text-primary-700 dark:bg-neutral-800 dark:text-white border-primary-200"
+                        profile.role === 'faculty'
+                          ? 'bg-orange-50 text-orange-700 border-orange-200'
+                          : 'bg-primary-50 text-primary-700 dark:bg-neutral-800 dark:text-white border-primary-200'
                       }`}
                     >
                       {profile.role}
@@ -191,7 +198,7 @@ export function PublicProfile({ alias }: PublicProfileProps) {
                     className="flex items-center gap-1.5"
                   >
                     <Eye className="h-3.5 w-3.5" />
-                    {identityLoading ? "Loading..." : "View Identity"}
+                    {identityLoading ? 'Loading...' : 'View Identity'}
                   </Button>
                 )}
               </div>
@@ -249,9 +256,7 @@ export function PublicProfile({ alias }: PublicProfileProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ContributionHeatmap
-              contributionDays={profile.stats.contribution_days}
-            />
+            <ContributionHeatmap contributionDays={profile.stats.contribution_days} />
           </CardContent>
         </Card>
       )}
@@ -259,9 +264,7 @@ export function PublicProfile({ alias }: PublicProfileProps) {
       {/* Badges */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base flex items-center gap-2">
-            🏆 Badges
-          </CardTitle>
+          <CardTitle className="text-base flex items-center gap-2">🏆 Badges</CardTitle>
         </CardHeader>
         <CardContent>
           <BadgeDisplay stats={profile.stats} />
@@ -292,6 +295,31 @@ export function PublicProfile({ alias }: PublicProfileProps) {
         </Card>
       )}
 
+      {/* Skills */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            ⚡ Skills
+            {isOwnProfile && (
+              <a
+                href="/settings#skills"
+                className="ml-auto text-[11px] font-normal text-geist-mute dark:text-neutral-500 hover:text-geist-ink dark:hover:text-white transition-colors"
+              >
+                Manage →
+              </a>
+            )}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <SkillSection
+            userID={profile.id}
+            skills={skills ?? []}
+            isOwn={isOwnProfile}
+            onRefetch={() => refetchSkills()}
+          />
+        </CardContent>
+      </Card>
+
       {/* Showcase Repos */}
       {profile.showcase_repos && profile.showcase_repos.length > 0 && (
         <div>
@@ -320,11 +348,11 @@ export function PublicProfile({ alias }: PublicProfileProps) {
                       variant="secondary"
                       className="text-[10px] bg-secondary-50 text-secondary-700 dark:bg-neutral-800 dark:text-white"
                     >
-                      {repo.academic_tag.replace("_", " ")}
+                      {repo.academic_tag.replace('_', ' ')}
                     </Badge>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-white mb-3 line-clamp-2">
-                    {repo.description || "No description"}
+                    {repo.description || 'No description'}
                   </p>
                   <div className="flex items-center gap-3">
                     {repo.language && (
@@ -393,13 +421,11 @@ function StatItem({
   label: string;
   color: string;
 }) {
-  const [iconColor, bgColor] = color.split(" ");
+  const [iconColor, bgColor] = color.split(' ');
   return (
     <Card className="hover-lift">
       <CardContent className="p-4 text-center">
-        <div
-          className={`inline-flex p-2 rounded-lg ${bgColor} mb-2`}
-        >
+        <div className={`inline-flex p-2 rounded-lg ${bgColor} mb-2`}>
           <Icon className={`h-4 w-4 ${iconColor}`} />
         </div>
         <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>

@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { useAuthContext } from "@/components/AuthProvider";
-import { ActivityFeed } from "@/features/feed/ActivityFeed";
-import { OnboardingPrompt } from "@/features/profile/OnboardingPrompt";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import api from "@/lib/api";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { useCurrentUser } from '@/hooks/useAuth';
+import { useAuthContext } from '@/components/AuthProvider';
+import { ActivityFeed } from '@/features/feed/ActivityFeed';
+import { OnboardingPrompt } from '@/features/profile/OnboardingPrompt';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import api from '@/lib/api';
 import {
   Code2,
   GitBranch,
@@ -24,7 +24,7 @@ import {
   TrendingUp,
   ExternalLink,
   Activity,
-} from "lucide-react";
+} from 'lucide-react';
 
 // --- Types ---
 interface CommunityStats {
@@ -61,7 +61,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (isReady && !isAuthenticated) {
-      router.replace("/welcome");
+      router.replace('/welcome');
     }
   }, [isReady, isAuthenticated, router]);
 
@@ -69,7 +69,7 @@ export default function DashboardPage() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (!user) {
-        router.replace("/welcome");
+        router.replace('/welcome');
       }
     }, 15000);
     return () => clearTimeout(timeout);
@@ -77,22 +77,18 @@ export default function DashboardPage() {
   }, [user]);
 
   const { data: stats } = useQuery<CommunityStats>({
-    queryKey: ["communityStats"],
+    queryKey: ['communityStats'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: CommunityStats }>(
-        "/stats"
-      );
+      const { data } = await api.get<{ ok: boolean; data: CommunityStats }>('/stats');
       return data.data;
     },
     enabled: !!user,
   });
 
   const { data: popularRepos } = useQuery<PopularRepo[]>({
-    queryKey: ["popularRepos"],
+    queryKey: ['popularRepos'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: PopularRepo[] }>(
-        "/repos/popular"
-      );
+      const { data } = await api.get<{ ok: boolean; data: PopularRepo[] }>('/repos/popular');
       return data.data;
     },
     enabled: !!user,
@@ -169,9 +165,7 @@ export default function DashboardPage() {
           <ActiveMembersSection />
           {/* Quick Links */}
           <div className="rounded-geist-md bg-geist-canvas dark:bg-neutral-900 geist-level-2 p-5">
-            <h3 className="text-body-sm-strong text-geist-ink dark:text-white mb-3">
-              Quick links
-            </h3>
+            <h3 className="text-body-sm-strong text-geist-ink dark:text-white mb-3">Quick links</h3>
             <div className="space-y-2">
               <Link
                 href="/showcase"
@@ -258,10 +252,10 @@ function CommunityStatsBar({ stats }: { stats: CommunityStats | undefined }) {
   }
 
   const items = [
-    { icon: Users, label: "Members", value: stats.total_members },
-    { icon: FolderGit2, label: "Repositories", value: stats.total_repos },
-    { icon: Activity, label: "This week", value: stats.commits_this_week },
-    { icon: TrendingUp, label: "Active today", value: stats.active_today },
+    { icon: Users, label: 'Members', value: stats.total_members },
+    { icon: FolderGit2, label: 'Repositories', value: stats.total_repos },
+    { icon: Activity, label: 'This week', value: stats.commits_this_week },
+    { icon: TrendingUp, label: 'Active today', value: stats.active_today },
   ];
 
   return (
@@ -325,7 +319,7 @@ function PopularReposSection({ repos }: { repos: PopularRepo[] | undefined }) {
                   )}
                 </div>
                 <p className="text-caption text-geist-mute dark:text-white0 line-clamp-2 mb-3">
-                  {repo.description || "No description"}
+                  {repo.description || 'No description'}
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -335,7 +329,7 @@ function PopularReposSection({ repos }: { repos: PopularRepo[] | undefined }) {
                       </Badge>
                     )}
                     <Badge variant="default" className="text-[10px]">
-                      {repo.academic_tag.replace("_", " ")}
+                      {repo.academic_tag.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1">
@@ -389,7 +383,7 @@ function ActiveMembersSection() {
       github_username: string;
     }>;
   }>({
-    queryKey: ["membersPreview"],
+    queryKey: ['membersPreview'],
     queryFn: async () => {
       const { data } = await api.get<{
         ok: boolean;
@@ -402,7 +396,7 @@ function ActiveMembersSection() {
           }>;
           total: number;
         };
-      }>("/members");
+      }>('/members');
       return data.data;
     },
   });

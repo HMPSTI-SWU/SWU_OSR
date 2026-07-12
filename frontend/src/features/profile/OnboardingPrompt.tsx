@@ -1,27 +1,27 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { X, Sparkles } from "lucide-react";
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useCurrentUser } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { X, Sparkles } from 'lucide-react';
 
-const DISMISS_KEY = "swu_osr_onboarding_dismissed";
+const DISMISS_KEY = 'swu_osr_onboarding_dismissed';
 
 export function OnboardingPrompt() {
   const { data: user } = useCurrentUser();
   const [dismissed, setDismissed] = useState(true);
 
   useEffect(() => {
-    setDismissed(localStorage.getItem(DISMISS_KEY) === "true");
+    setDismissed(localStorage.getItem(DISMISS_KEY) === 'true');
   }, []);
 
   if (!user) return null;
   if (dismissed) return null;
-  if (user.alias !== user.github_username && user.bio !== "") return null;
+  if (user.alias !== user.github_username && user.bio !== '') return null;
 
   const handleDismiss = () => {
-    localStorage.setItem(DISMISS_KEY, "true");
+    localStorage.setItem(DISMISS_KEY, 'true');
     setDismissed(true);
   };
 
@@ -46,10 +46,7 @@ export function OnboardingPrompt() {
             Set a unique alias and bio to stand out in the community.
           </p>
           <Link href="/settings" className="inline-block mt-3">
-            <Button
-              size="sm"
-              className="gradient-primary text-white border-0 shadow-sm"
-            >
+            <Button size="sm" className="gradient-primary text-white border-0 shadow-sm">
               Set up your profile
             </Button>
           </Link>

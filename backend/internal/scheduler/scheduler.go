@@ -77,17 +77,14 @@ func (s *Scheduler) run() {
 	}
 }
 
-// refreshAll refreshes all leaderboard periods.
-// Performance: Runs all 4 periods in parallel since they are independent,
-// cutting total refresh cycle time by ~4×.
+// refreshAll refreshes all active leaderboard periods.
+// Performance: Runs both periods in parallel since they are independent.
 func (s *Scheduler) refreshAll() {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 
 	periods := []domain.LeaderboardPeriod{
-		domain.PeriodWeekly,
-		domain.PeriodMonthly,
-		domain.PeriodSemester,
+		domain.PeriodQuarterly,
 		domain.PeriodAllTime,
 	}
 

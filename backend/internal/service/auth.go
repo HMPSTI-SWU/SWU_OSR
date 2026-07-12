@@ -167,6 +167,11 @@ func (s *authService) CompleteGitHubOAuth(ctx context.Context, sessionID, code s
 	}
 
 	if user == nil {
+		// Determine initial role — NIMs in the super-admin list start as super_admin.
+		initialRole := domain.RoleStudent
+		if s.isSuperAdminNIM(sessionData.NIM) {
+			initialRole = domain.RoleSuperAdmin
+		}
 		// Create new user
 		user = &domain.User{
 			ID:             uuid.New(),
@@ -179,7 +184,7 @@ func (s *authService) CompleteGitHubOAuth(ctx context.Context, sessionID, code s
 			GitHubUsername: ghUser.Login,
 			GitHubID:       ghUser.ID,
 			GitHubToken:    encryptedToken,
-			Role:           domain.RoleStudent,
+			Role:           initialRole,
 			IsActive:       sessionData.IsActive,
 			CreatedAt:      time.Now(),
 			UpdatedAt:      time.Now(),
@@ -198,6 +203,11 @@ func (s *authService) CompleteGitHubOAuth(ctx context.Context, sessionID, code s
 		user.Semester = sessionData.Semester
 		user.IsActive = sessionData.IsActive
 		user.UpdatedAt = time.Now()
+		// Preserve existing role unless the NIM is in the super-admin list.
+		// This prevents overwriting a manually assigned lecturer/lpt_officer role on re-login.
+		if s.isSuperAdminNIM(sessionData.NIM) {
+			user.Role = domain.RoleSuperAdmin
+		}
 		if err := s.userRepo.Update(ctx, user); err != nil {
 			return nil, fmt.Errorf("updating user: %w", err)
 		}
@@ -345,4 +355,14 @@ func (s *authService) generateRefreshToken(ctx context.Context, userID uuid.UUID
 func hashRefreshToken(token string) (string, error) {
 	hash := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(hash[:]), nil
+}
+
+// isSuperAdminNIM checks whether the given NIM is in the configured super-admin list.
+func (s *authService) isSuperAdminNIM(nim string) bool {
+	for _, adminNIM := range s.cfg.SuperAdminNIMs {
+		if adminNIM == nim {
+			return true
+		}
+	}
+	return false
 }

@@ -1,4 +1,4 @@
-export type EventType = "push" | "pull_request" | "release";
+export type EventType = 'push' | 'pull_request' | 'release';
 
 export interface ActivityItem {
   id: string;

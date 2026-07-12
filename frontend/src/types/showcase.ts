@@ -1,9 +1,5 @@
 export type AcademicTag =
-  | "coursework"
-  | "thesis"
-  | "hackathon"
-  | "personal_research"
-  | "team_project";
+  'coursework' | 'thesis' | 'hackathon' | 'personal_research' | 'team_project';
 
 export interface ShowcaseRepo {
   id: string;

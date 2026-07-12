@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuthContext } from "@/components/AuthProvider";
-import { Button } from "@/components/ui/button";
-import { PublicActivityFeed } from "@/features/feed/PublicActivityFeed";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuthContext } from '@/components/AuthProvider';
+import { Button } from '@/components/ui/button';
+import { PublicActivityFeed } from '@/features/feed/PublicActivityFeed';
 import {
   Code2,
   FolderGit2,
@@ -15,7 +15,7 @@ import {
   Shield,
   Globe,
   Activity,
-} from "lucide-react";
+} from 'lucide-react';
 
 /**
  * Marketing / landing page for unauthenticated visitors.
@@ -27,7 +27,7 @@ export default function WelcomePage() {
 
   useEffect(() => {
     if (isReady && isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace('/dashboard');
     }
   }, [isReady, isAuthenticated, router]);
 
@@ -59,9 +59,8 @@ function HeroSection() {
             Showcase your code, build your future.
           </h1>
           <p className="mt-6 text-body-lg text-geist-body dark:text-white max-w-2xl mx-auto animate-slide-up">
-            Platform mahasiswa STMIK Widya Utama untuk menampilkan proyek open
-            source, berkolaborasi dengan peers, dan membangun portofolio
-            profesional.
+            Platform mahasiswa STMIK Widya Utama untuk menampilkan proyek open source, berkolaborasi
+            dengan peers, dan membangun portofolio profesional.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up">
             <Link href="/login">
@@ -87,9 +86,7 @@ function FeedPreviewSection() {
     <section className="py-16 bg-geist-canvas dark:bg-[#0A0A0A]">
       <div className="mx-auto max-w-geist-page px-6">
         <div className="text-center mb-8">
-          <h2 className="text-display-lg text-geist-ink dark:text-white">
-            Community Activity
-          </h2>
+          <h2 className="text-display-lg text-geist-ink dark:text-white">Community Activity</h2>
           <p className="mt-3 text-body-md text-geist-body dark:text-gray-300 max-w-xl mx-auto">
             See what our members are building in real time.
           </p>
@@ -114,39 +111,33 @@ function FeaturesSection() {
   const features = [
     {
       icon: FolderGit2,
-      title: "Project showcase.",
-      description:
-        "Tampilkan repository GitHub terbaik kamu dengan tag akademik.",
+      title: 'Project showcase.',
+      description: 'Tampilkan repository GitHub terbaik kamu dengan tag akademik.',
     },
     {
       icon: Activity,
-      title: "Activity tracking.",
-      description:
-        "Webhook otomatis mencatat setiap push, PR, dan release.",
+      title: 'Activity tracking.',
+      description: 'Webhook otomatis mencatat setiap push, PR, dan release.',
     },
     {
       icon: MessageSquare,
-      title: "Discussions.",
-      description:
-        "Forum per-repository untuk review kode dan kolaborasi.",
+      title: 'Discussions.',
+      description: 'Forum per-repository untuk review kode dan kolaborasi.',
     },
     {
       icon: Shield,
-      title: "Pseudonymous identity.",
-      description:
-        "Gunakan alias publik. Identitas hanya terlihat sesama pengguna.",
+      title: 'Pseudonymous identity.',
+      description: 'Gunakan alias publik. Identitas hanya terlihat sesama pengguna.',
     },
     {
       icon: Trophy,
-      title: "Badges & streaks.",
-      description:
-        "Dapatkan badges berdasarkan pencapaian dan konsistensi.",
+      title: 'Badges & streaks.',
+      description: 'Dapatkan badges berdasarkan pencapaian dan konsistensi.',
     },
     {
       icon: Globe,
-      title: "Public portfolio.",
-      description:
-        "Profil publik yang bisa dibagikan ke recruiter atau siapa saja.",
+      title: 'Public portfolio.',
+      description: 'Profil publik yang bisa dibagikan ke recruiter atau siapa saja.',
     },
   ];
 
@@ -161,8 +152,7 @@ function FeaturesSection() {
             Everything you need to stand out.
           </h2>
           <p className="mt-4 text-body-lg text-geist-body dark:text-white max-w-xl mx-auto">
-            Satu platform untuk semua kebutuhan portofolio open source
-            mahasiswa.
+            Satu platform untuk semua kebutuhan portofolio open source mahasiswa.
           </p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -200,11 +190,15 @@ function CTASection() {
             Ready to build your portfolio?
           </h2>
           <p className="text-body-lg text-geist-on-primary/70 dark:text-black/60 max-w-xl mx-auto mb-10">
-            Mulai showcase karya open source kamu hari ini. Login dengan akun
-            SIAKAD dan hubungkan GitHub.
+            Mulai showcase karya open source kamu hari ini. Login dengan akun SIAKAD dan hubungkan
+            GitHub.
           </p>
           <Link href="/login">
-            <Button variant="secondary" size="default" className="dark:bg-black dark:text-white dark:hover:bg-neutral-900">
+            <Button
+              variant="secondary"
+              size="default"
+              className="dark:bg-black dark:text-white dark:hover:bg-neutral-900"
+            >
               Start now — it&apos;s free
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

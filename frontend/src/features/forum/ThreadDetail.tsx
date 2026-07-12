@@ -1,18 +1,13 @@
-"use client";
+'use client';
 
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import type { Thread, Comment } from "@/types/forum";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { CreateCommentForm } from "./CreateCommentForm";
-import {
-  ArrowLeft,
-  Clock,
-  MessageSquare,
-  MessageCircle,
-} from "lucide-react";
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import api from '@/lib/api';
+import type { Thread, Comment } from '@/types/forum';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { CreateCommentForm } from './CreateCommentForm';
+import { ArrowLeft, Clock, MessageSquare, MessageCircle } from 'lucide-react';
 
 interface ThreadDetailProps {
   repoId: string;
@@ -31,7 +26,7 @@ function getRelativeTime(dateString: string): string {
   if (days > 0) return `${days}d ago`;
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
-  return "just now";
+  return 'just now';
 }
 
 export function ThreadDetail({ repoId, threadId }: ThreadDetailProps) {
@@ -39,7 +34,7 @@ export function ThreadDetail({ repoId, threadId }: ThreadDetailProps) {
     thread: Thread;
     comments: Comment[];
   }>({
-    queryKey: ["thread", threadId],
+    queryKey: ['thread', threadId],
     queryFn: async () => {
       const { data } = await api.get<{
         ok: boolean;
@@ -133,7 +128,7 @@ export function ThreadDetail({ repoId, threadId }: ThreadDetailProps) {
                   <div className="flex items-start gap-3">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-100 to-secondary-100 flex items-center justify-center shrink-0">
                       <span className="text-xs font-medium text-primary-700 dark:text-white">
-                        {String(idx + 1).padStart(2, "0")}
+                        {String(idx + 1).padStart(2, '0')}
                       </span>
                     </div>
                     <div className="flex-1">

@@ -1,12 +1,21 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import type { LeaderboardEntry } from "@/types/leaderboard";
-import { Trophy, Flame, GitBranch, GitPullRequest, MessageSquare, Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useMemo } from 'react';
+import Link from 'next/link';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import type { LeaderboardEntry } from '@/types/leaderboard';
+import {
+  Trophy,
+  Flame,
+  GitBranch,
+  GitPullRequest,
+  MessageSquare,
+  Star,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 const PAGE_SIZE = 15;
 
@@ -18,13 +27,13 @@ interface LeaderboardTableProps {
 function getRankStyle(rank: number) {
   switch (rank) {
     case 1:
-      return "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800";
+      return 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800';
     case 2:
-      return "bg-slate-50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800";
+      return 'bg-slate-50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-800';
     case 3:
-      return "bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800";
+      return 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-800';
     default:
-      return "bg-geist-canvas dark:bg-neutral-900 border-geist-hairline dark:border-neutral-800";
+      return 'bg-geist-canvas dark:bg-neutral-900 border-geist-hairline dark:border-neutral-800';
   }
 }
 
@@ -51,9 +60,7 @@ function getRankBadge(rank: number) {
     default:
       return (
         <div className="h-8 w-8 rounded-geist-full bg-geist-canvas-soft-2 dark:bg-neutral-800 flex items-center justify-center">
-          <span className="text-caption-mono text-geist-mute dark:text-neutral-400">
-            {rank}
-          </span>
+          <span className="text-caption-mono text-geist-mute dark:text-neutral-400">{rank}</span>
         </div>
       );
   }
@@ -91,7 +98,7 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
         return (
           <div
             key={entry.user_id}
-            className={`flex items-center gap-4 p-4 rounded-geist-md border transition-shadow hover:shadow-geist-2 ${getRankStyle(entry.rank)} ${isCurrentUser ? "ring-2 ring-geist-link/30 dark:ring-blue-500/30" : ""}`}
+            className={`flex items-center gap-4 p-4 rounded-geist-md border transition-shadow hover:shadow-geist-2 ${getRankStyle(entry.rank)} ${isCurrentUser ? 'ring-2 ring-geist-link/30 dark:ring-blue-500/30' : ''}`}
           >
             {/* Rank */}
             {getRankBadge(entry.rank)}
@@ -158,7 +165,7 @@ export function LeaderboardTable({ entries, currentUserId }: LeaderboardTablePro
             {/* Total points */}
             <div className="text-right">
               <Badge
-                variant={entry.rank <= 3 ? "success" : "secondary"}
+                variant={entry.rank <= 3 ? 'success' : 'secondary'}
                 className="text-caption-mono font-semibold"
               >
                 {entry.total_points} pts

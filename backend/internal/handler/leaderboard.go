@@ -19,7 +19,7 @@ func NewLeaderboardHandler(svc domain.LeaderboardService) *LeaderboardHandler {
 	return &LeaderboardHandler{svc: svc}
 }
 
-// HandleGetLeaderboard handles GET /api/leaderboard?period=weekly&limit=20&offset=0
+// HandleGetLeaderboard handles GET /api/leaderboard?period=quarterly&limit=20&offset=0
 func (h *LeaderboardHandler) HandleGetLeaderboard(w http.ResponseWriter, r *http.Request) {
 	period := parsePeriod(r.URL.Query().Get("period"))
 	limit := parseIntParam(r.URL.Query().Get("limit"), 20)
@@ -84,19 +84,15 @@ func (h *LeaderboardHandler) HandleGetMyPoints(w http.ResponseWriter, r *http.Re
 	RespondJSON(w, http.StatusOK, summary)
 }
 
-// parsePeriod converts a string to a LeaderboardPeriod, defaulting to weekly.
+// parsePeriod converts a string to a LeaderboardPeriod, defaulting to quarterly.
 func parsePeriod(s string) domain.LeaderboardPeriod {
 	switch s {
-	case "weekly":
-		return domain.PeriodWeekly
-	case "monthly":
-		return domain.PeriodMonthly
-	case "semester":
-		return domain.PeriodSemester
+	case "quarterly":
+		return domain.PeriodQuarterly
 	case "all_time":
 		return domain.PeriodAllTime
 	default:
-		return domain.PeriodWeekly
+		return domain.PeriodQuarterly
 	}
 }
 

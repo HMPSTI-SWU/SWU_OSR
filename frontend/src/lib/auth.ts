@@ -10,14 +10,14 @@
 
 let accessToken: string | null = null;
 
-const SESSION_ID_KEY = "swu_osr_session_id";
-const TOKEN_STORAGE_KEY = "swu_osr_at";
-const LOGGED_IN_HINT_KEY = "swu_osr_logged_in";
+const SESSION_ID_KEY = 'swu_osr_session_id';
+const TOKEN_STORAGE_KEY = 'swu_osr_at';
+const LOGGED_IN_HINT_KEY = 'swu_osr_logged_in';
 
 export function getAccessToken(): string | null {
   if (accessToken) return accessToken;
   // Rehydrate from sessionStorage on first call (e.g. after page refresh)
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     const stored = sessionStorage.getItem(TOKEN_STORAGE_KEY);
     if (stored) {
       accessToken = stored;
@@ -29,19 +29,19 @@ export function getAccessToken(): string | null {
 
 export function setAccessToken(token: string): void {
   accessToken = token;
-  if (typeof window !== "undefined") {
+  if (typeof window !== 'undefined') {
     sessionStorage.setItem(TOKEN_STORAGE_KEY, token);
-    localStorage.setItem(LOGGED_IN_HINT_KEY, "1");
+    localStorage.setItem(LOGGED_IN_HINT_KEY, '1');
   }
 }
 
 export function getSessionId(): string | null {
-  if (typeof window === "undefined") return null;
+  if (typeof window === 'undefined') return null;
   return localStorage.getItem(SESSION_ID_KEY);
 }
 
 export function setSessionId(sessionId: string): void {
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   localStorage.setItem(SESSION_ID_KEY, sessionId);
 }
 
@@ -51,13 +51,13 @@ export function setSessionId(sessionId: string): void {
  * the unauthenticated landing page immediately on mount.
  */
 export function hasLoggedInHint(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(LOGGED_IN_HINT_KEY) === "1";
+  if (typeof window === 'undefined') return false;
+  return localStorage.getItem(LOGGED_IN_HINT_KEY) === '1';
 }
 
 export function clearTokens(): void {
   accessToken = null;
-  if (typeof window === "undefined") return;
+  if (typeof window === 'undefined') return;
   sessionStorage.removeItem(TOKEN_STORAGE_KEY);
   localStorage.removeItem(SESSION_ID_KEY);
   localStorage.removeItem(LOGGED_IN_HINT_KEY);
@@ -70,18 +70,15 @@ export function clearTokens(): void {
  */
 export async function rehydrateToken(): Promise<string | null> {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "/api"}/auth/refresh`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-      }
-    );
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || '/api'}/auth/refresh`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+    });
     if (!res.ok) {
       // Refresh failed — clear the hint so next load doesn't show skeleton
-      if (typeof window !== "undefined") {
+      if (typeof window !== 'undefined') {
         localStorage.removeItem(LOGGED_IN_HINT_KEY);
       }
       return null;

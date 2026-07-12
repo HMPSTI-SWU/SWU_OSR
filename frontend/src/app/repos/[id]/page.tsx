@@ -1,15 +1,16 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import type { ShowcaseRepo } from "@/types/showcase";
-import type { ActivityItem } from "@/types/activity";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import { useCurrentUser } from '@/hooks/useAuth';
+import api from '@/lib/api';
+import type { ShowcaseRepo } from '@/types/showcase';
+import type { ActivityItem } from '@/types/activity';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   ArrowLeft,
   ExternalLink,
@@ -22,7 +23,7 @@ import {
   Code2,
   Clock,
   RefreshCw,
-} from "lucide-react";
+} from 'lucide-react';
 
 interface RepoPageProps {
   params: { id: string };
@@ -39,65 +40,64 @@ function getRelativeTime(dateString: string): string {
   if (days > 0) return `${days}d ago`;
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
-  return "just now";
+  return 'just now';
 }
 
 function getEventConfig(eventType: string) {
   switch (eventType) {
-    case "push":
+    case 'push':
       return {
         icon: <GitCommit className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />,
-        bg: "bg-emerald-50 dark:bg-emerald-950/40",
-        border: "border-emerald-200 dark:border-emerald-800/60",
-        label: "Pushed",
-        labelColor: "text-emerald-700 dark:text-emerald-400",
+        bg: 'bg-emerald-50 dark:bg-emerald-950/40',
+        border: 'border-emerald-200 dark:border-emerald-800/60',
+        label: 'Pushed',
+        labelColor: 'text-emerald-700 dark:text-emerald-400',
       };
-    case "pull_request":
+    case 'pull_request':
       return {
         icon: <GitPullRequest className="h-3.5 w-3.5 text-purple-600 dark:text-purple-400" />,
-        bg: "bg-purple-50 dark:bg-purple-950/40",
-        border: "border-purple-200 dark:border-purple-800/60",
-        label: "PR",
-        labelColor: "text-purple-700 dark:text-purple-400",
+        bg: 'bg-purple-50 dark:bg-purple-950/40',
+        border: 'border-purple-200 dark:border-purple-800/60',
+        label: 'PR',
+        labelColor: 'text-purple-700 dark:text-purple-400',
       };
-    case "release":
+    case 'release':
       return {
         icon: <Tag className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />,
-        bg: "bg-blue-50 dark:bg-blue-950/40",
-        border: "border-blue-200 dark:border-blue-800/60",
-        label: "Release",
-        labelColor: "text-blue-700 dark:text-blue-400",
+        bg: 'bg-blue-50 dark:bg-blue-950/40',
+        border: 'border-blue-200 dark:border-blue-800/60',
+        label: 'Release',
+        labelColor: 'text-blue-700 dark:text-blue-400',
       };
     default:
       return {
         icon: <GitBranch className="h-3.5 w-3.5 text-gray-600 dark:text-gray-400" />,
-        bg: "bg-gray-50 dark:bg-neutral-800/60",
-        border: "border-gray-200 dark:border-neutral-700",
-        label: "Activity",
-        labelColor: "text-gray-600 dark:text-gray-400",
+        bg: 'bg-gray-50 dark:bg-neutral-800/60',
+        border: 'border-gray-200 dark:border-neutral-700',
+        label: 'Activity',
+        labelColor: 'text-gray-600 dark:text-gray-400',
       };
   }
 }
 
 export default function RepoDetailPage({ params }: RepoPageProps) {
+  const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<string | null>(null);
 
   // Fetch showcase repo details from the public endpoint
   const { data: repo, isLoading } = useQuery<ShowcaseRepo>({
-    queryKey: ["publicRepo", params.id],
+    queryKey: ['publicRepo', params.id],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: ShowcaseRepo }>(
-        `/repos/${params.id}`
-      );
+      const { data } = await api.get<{ ok: boolean; data: ShowcaseRepo }>(`/repos/${params.id}`);
       return data.data;
     },
   });
 
   // Fetch recent activity for this repo from the dedicated endpoint
   const { data: feedData, isLoading: activityLoading } = useQuery<{ items: ActivityItem[] }>({
-    queryKey: ["repoActivity", params.id],
+    queryKey: ['repoActivity', params.id],
     queryFn: async () => {
       const { data } = await api.get<{ ok: boolean; data: { items: ActivityItem[] } }>(
         `/repos/${params.id}/activity`,
@@ -111,13 +111,13 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
     setSyncing(true);
     setSyncResult(null);
     try {
-      const { data } = await api.post<{ ok: boolean; data: { synced: number } }>("/activity/sync");
+      const { data } = await api.post<{ ok: boolean; data: { synced: number } }>('/activity/sync');
       const count = data.data.synced;
-      setSyncResult(count > 0 ? `Synced ${count} activities!` : "Already up to date.");
+      setSyncResult(count > 0 ? `Synced ${count} activities!` : 'Already up to date.');
       // Refetch activity after sync
-      queryClient.invalidateQueries({ queryKey: ["repoActivity", params.id] });
+      queryClient.invalidateQueries({ queryKey: ['repoActivity', params.id] });
     } catch {
-      setSyncResult("Failed to sync. Please try again.");
+      setSyncResult('Failed to sync. Please try again.');
     } finally {
       setSyncing(false);
     }
@@ -166,11 +166,11 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
     <div className="mx-auto max-w-4xl px-4 py-8">
       {/* Back link */}
       <Link
-        href="/feed"
+        href={user ? '/dashboard' : '/feed'}
         className="inline-flex items-center gap-1 text-sm text-gray-500 dark:text-white hover:text-primary-600 dark:hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Back to Feed
+        {user ? 'Back to Dashboard' : 'Back to Feed'}
       </Link>
 
       {/* Repo Header */}
@@ -186,7 +186,8 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
                 </h1>
               </div>
               <p className="text-gray-600 dark:text-white mb-4">
-                {repo.description || "No description provided. You can add one from the Showcase page."}
+                {repo.description ||
+                  'No description provided. You can add one from the Showcase page.'}
               </p>
               <div className="flex flex-wrap items-center gap-2">
                 {repo.language && (
@@ -196,11 +197,9 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
                   </Badge>
                 )}
                 <Badge className="bg-primary-50 text-primary-700 dark:bg-neutral-800 dark:text-white border-primary-200">
-                  {repo.academic_tag.replace("_", " ")}
+                  {repo.academic_tag.replace('_', ' ')}
                 </Badge>
-                <span className="text-xs text-gray-400 dark:text-white">
-                  {repo.repo_full_name}
-                </span>
+                <span className="text-xs text-gray-400 dark:text-white">{repo.repo_full_name}</span>
               </div>
             </div>
             <div className="flex flex-col gap-2 sm:items-end">
@@ -245,7 +244,9 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
                         <div className="mt-0.5 shrink-0">{config.icon}</div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-0.5">
-                            <span className={`text-[10px] font-semibold uppercase tracking-wide ${config.labelColor}`}>
+                            <span
+                              className={`text-[10px] font-semibold uppercase tracking-wide ${config.labelColor}`}
+                            >
                               {config.label}
                             </span>
                             <span className="text-[10px] text-gray-400 dark:text-gray-500">•</span>
@@ -279,8 +280,8 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
                     disabled={syncing}
                     className="gap-1.5 gradient-primary text-white border-0"
                   >
-                    <RefreshCw className={`h-3.5 w-3.5 ${syncing ? "animate-spin" : ""}`} />
-                    {syncing ? "Syncing..." : "Sync GitHub Activity"}
+                    <RefreshCw className={`h-3.5 w-3.5 ${syncing ? 'animate-spin' : ''}`} />
+                    {syncing ? 'Syncing...' : 'Sync GitHub Activity'}
                   </Button>
                   {syncResult && (
                     <p className="text-xs text-green-600 mt-2 font-medium">{syncResult}</p>
@@ -301,18 +302,22 @@ export default function RepoDetailPage({ params }: RepoPageProps) {
             <CardContent className="space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Full Name</span>
-                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{repo.repo_full_name}</span>
+                <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                  {repo.repo_full_name}
+                </span>
               </div>
               {repo.language && (
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-500 dark:text-gray-400">Language</span>
-                  <span className="text-xs font-medium text-gray-700 dark:text-gray-200">{repo.language}</span>
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                    {repo.language}
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between">
                 <span className="text-xs text-gray-500 dark:text-gray-400">Tag</span>
                 <Badge className="text-[10px] bg-primary-50 text-primary-700 dark:bg-primary-950/40 dark:text-primary-300">
-                  {repo.academic_tag.replace("_", " ")}
+                  {repo.academic_tag.replace('_', ' ')}
                 </Badge>
               </div>
               <div className="flex items-center justify-between">

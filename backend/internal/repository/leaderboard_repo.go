@@ -111,8 +111,8 @@ func (r *LeaderboardRepo) GetUserPoints(ctx context.Context, userID uuid.UUID, f
 	if domain.PointsPush > 0 {
 		summary.PushCount = pushPts / domain.PointsPush
 	}
-	if domain.PointsPROpened > 0 {
-		summary.PRCount = prPts / domain.PointsPROpened
+	if domain.PointsPRMerged > 0 {
+		summary.PRCount = prPts / domain.PointsPRMerged
 	}
 	// Forum points are mixed (threads=2, comments=1), store raw for now
 	summary.ThreadCount = 0
@@ -205,12 +205,13 @@ func (r *LeaderboardRepo) CountUserPREvents(ctx context.Context, userID uuid.UUI
 }
 
 // CountUserPushEventsPerRepo returns push event counts grouped by showcase_repo_id for a user within a time range.
-// This is used to apply per-repo weekly caps to prevent gaming.
+// This is used to apply per-repo quarterly caps to prevent gaming.
 func (r *LeaderboardRepo) CountUserPushEventsPerRepo(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]domain.RepoEventCount, error) {
 	query := `
 		SELECT showcase_repo_id, COUNT(*) AS cnt
 		FROM activity_logs
 		WHERE user_id = $1 AND event_type = 'push' AND created_at >= $2 AND created_at < $3
+		  AND showcase_repo_id IS NOT NULL
 		GROUP BY showcase_repo_id`
 
 	rows, err := r.pool.Query(ctx, query, userID, from, to)
@@ -234,12 +235,13 @@ func (r *LeaderboardRepo) CountUserPushEventsPerRepo(ctx context.Context, userID
 }
 
 // CountUserPREventsPerRepo returns PR event counts grouped by showcase_repo_id for a user within a time range.
-// This is used to apply per-repo weekly caps to prevent gaming.
+// This is used to apply per-repo quarterly caps to prevent gaming.
 func (r *LeaderboardRepo) CountUserPREventsPerRepo(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]domain.RepoEventCount, error) {
 	query := `
 		SELECT showcase_repo_id, COUNT(*) AS cnt
 		FROM activity_logs
 		WHERE user_id = $1 AND event_type = 'pull_request' AND created_at >= $2 AND created_at < $3
+		  AND showcase_repo_id IS NOT NULL
 		GROUP BY showcase_repo_id`
 
 	rows, err := r.pool.Query(ctx, query, userID, from, to)
@@ -260,6 +262,247 @@ func (r *LeaderboardRepo) CountUserPREventsPerRepo(ctx context.Context, userID u
 		results = []domain.RepoEventCount{}
 	}
 	return results, rows.Err()
+}
+
+// CountUserMergedPREventsPerRepo returns per-repo counts of PRs that were merged.
+// A PR is considered merged when: event_type='pull_request' AND metadata->>'action'='closed'
+// AND (metadata->>'merged'='true' OR metadata->>'merged' IS inferred from GitHub payload).
+// We check for action='closed' as the main filter since webhooks send 'closed' for merges.
+func (r *LeaderboardRepo) CountUserMergedPREventsPerRepo(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]domain.RepoEventCount, error) {
+	query := `
+		SELECT showcase_repo_id, COUNT(*) AS cnt
+		FROM activity_logs
+		WHERE user_id = $1
+		  AND event_type = 'pull_request'
+		  AND created_at >= $2 AND created_at < $3
+		  AND showcase_repo_id IS NOT NULL
+		  AND (
+		    metadata->>'action' = 'closed'
+		    OR metadata->>'merged' = 'true'
+		  )
+		GROUP BY showcase_repo_id`
+
+	rows, err := r.pool.Query(ctx, query, userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []domain.RepoEventCount
+	for rows.Next() {
+		var rc domain.RepoEventCount
+		if err := rows.Scan(&rc.RepoID, &rc.Count); err != nil {
+			return nil, err
+		}
+		results = append(results, rc)
+	}
+	if results == nil {
+		results = []domain.RepoEventCount{}
+	}
+	return results, rows.Err()
+}
+
+// CountUserWeightedPushPerRepo returns push counts per repo WITH star count from metadata.
+// The star count is read from metadata->>'repo_stars' (stored by aggregator on each webhook).
+// Legacy rows without repo_stars default to 0 stars → multiplier = 1.0 (backward compatible).
+func (r *LeaderboardRepo) CountUserWeightedPushPerRepo(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]domain.WeightedRepoEventCount, error) {
+	query := `
+		SELECT
+			showcase_repo_id,
+			COUNT(*) AS cnt,
+			-- Ambil nilai stars tertinggi dari grup repo ini (lebih akurat dari rata-rata)
+			MAX(COALESCE(NULLIF(metadata->>'repo_stars', '')::int, 0)) AS repo_stars
+		FROM activity_logs
+		WHERE user_id = $1
+		  AND event_type = 'push'
+		  AND created_at >= $2 AND created_at < $3
+		  AND showcase_repo_id IS NOT NULL
+		GROUP BY showcase_repo_id`
+
+	rows, err := r.pool.Query(ctx, query, userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []domain.WeightedRepoEventCount
+	for rows.Next() {
+		var wrc domain.WeightedRepoEventCount
+		if err := rows.Scan(&wrc.RepoID, &wrc.Count, &wrc.Stars); err != nil {
+			return nil, err
+		}
+		results = append(results, wrc)
+	}
+	if results == nil {
+		results = []domain.WeightedRepoEventCount{}
+	}
+	return results, rows.Err()
+}
+
+// CountUserWeightedMergedPRPerRepo returns merged PR counts per repo WITH star count from metadata.
+func (r *LeaderboardRepo) CountUserWeightedMergedPRPerRepo(ctx context.Context, userID uuid.UUID, from, to time.Time) ([]domain.WeightedRepoEventCount, error) {
+	query := `
+		SELECT
+			showcase_repo_id,
+			COUNT(*) AS cnt,
+			MAX(COALESCE(NULLIF(metadata->>'repo_stars', '')::int, 0)) AS repo_stars
+		FROM activity_logs
+		WHERE user_id = $1
+		  AND event_type = 'pull_request'
+		  AND created_at >= $2 AND created_at < $3
+		  AND showcase_repo_id IS NOT NULL
+		  AND (
+		    metadata->>'action' = 'closed'
+		    OR metadata->>'merged' = 'true'
+		  )
+		GROUP BY showcase_repo_id`
+
+	rows, err := r.pool.Query(ctx, query, userID, from, to)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var results []domain.WeightedRepoEventCount
+	for rows.Next() {
+		var wrc domain.WeightedRepoEventCount
+		if err := rows.Scan(&wrc.RepoID, &wrc.Count, &wrc.Stars); err != nil {
+			return nil, err
+		}
+		results = append(results, wrc)
+	}
+	if results == nil {
+		results = []domain.WeightedRepoEventCount{}
+	}
+	return results, rows.Err()
+}
+
+// GetUserAnomalyCoefficient menggunakan Z-Score berbasis PostgreSQL untuk mendeteksi burst activity.
+//
+// Algoritma:
+//  1. Hitung rata-rata (avg) dan standar deviasi (stddev) push harian dari 30 hari terakhir (exclude hari ini)
+//  2. Hitung jumlah push hari ini
+//  3. Jika push_hari_ini > avg + 2*stddev → aktivitas anomali → terapkan penalti
+//
+// Rumus penalti: coeff = max(0.1, 1 - (excess/today) * 0.5)
+// Contoh: avg=5, stddev=2, threshold=9, hari_ini=50
+//   excess = 50-9 = 41, ratio = 41/50 = 0.82
+//   coeff = max(0.1, 1 - 0.82*0.5) = 0.59 → poin dikali 0.59
+//
+// Returns 1.0 (tidak ada penalti) jika:
+// - Data historis < 7 hari (user baru, belum cukup data)
+// - stddev = 0 (aktivitas sangat konsisten, bukan anomali)
+// - Aktivitas hari ini normal
+func (r *LeaderboardRepo) GetUserAnomalyCoefficient(ctx context.Context, userID uuid.UUID) (float64, error) {
+	query := `
+		WITH daily_counts AS (
+			SELECT
+				DATE(created_at) AS day,
+				COUNT(*)         AS cnt
+			FROM activity_logs
+			WHERE user_id = $1
+			  AND event_type = 'push'
+			  AND created_at >= NOW() - INTERVAL '31 days'
+			GROUP BY DATE(created_at)
+		),
+		historical AS (
+			-- Gunakan data 30 hari KECUALI hari ini untuk menghitung baseline
+			SELECT
+				COUNT(*)            AS day_count,
+				COALESCE(AVG(cnt), 0)    AS avg_daily,
+				COALESCE(STDDEV(cnt), 0) AS stddev_daily
+			FROM daily_counts
+			WHERE day < CURRENT_DATE
+		),
+		today AS (
+			SELECT COALESCE(SUM(cnt), 0) AS today_count
+			FROM daily_counts
+			WHERE day = CURRENT_DATE
+		)
+		SELECT
+			historical.day_count,
+			historical.avg_daily,
+			historical.stddev_daily,
+			today.today_count
+		FROM historical, today`
+
+	var dayCount int
+	var avgDaily, stddevDaily float64
+	var todayCount int
+
+	err := r.pool.QueryRow(ctx, query, userID).Scan(
+		&dayCount, &avgDaily, &stddevDaily, &todayCount,
+	)
+	if err != nil {
+		// Jika query gagal, kembalikan 1.0 (tidak ada penalti) — fail-open
+		return 1.0, nil
+	}
+
+	// Tidak cukup data historis → tidak terapkan penalti
+	if dayCount < 7 {
+		return 1.0, nil
+	}
+
+	// stddev = 0 berarti aktivitas sangat konsisten → tidak anomali
+	if stddevDaily == 0 {
+		return 1.0, nil
+	}
+
+	threshold := avgDaily + 2*stddevDaily
+	if float64(todayCount) <= threshold {
+		return 1.0, nil // Normal, tidak ada penalti
+	}
+
+	// Hitung excess dan koefisien penalti
+	excess := float64(todayCount) - threshold
+	excessRatio := excess / float64(todayCount)
+	coeff := 1.0 - excessRatio*0.5
+
+	// Floor: tidak boleh kurang dari 0.1 (minimal 10% poin tetap dihitung)
+	if coeff < 0.1 {
+		coeff = 0.1
+	}
+
+	return coeff, nil
+}
+
+// GetUserBehavioralStats returns timing-based activity statistics for badge calculation.
+// Uses the EXTRACT function to determine the local server hour and day-of-week.
+func (r *LeaderboardRepo) GetUserBehavioralStats(ctx context.Context, userID uuid.UUID, from, to time.Time) (*domain.BehavioralStats, error) {
+	query := `
+		SELECT
+			COUNT(*) FILTER (WHERE EXTRACT(HOUR FROM created_at) >= 0 AND EXTRACT(HOUR FROM created_at) < 4)  AS night_owl_count,
+			COUNT(*) FILTER (WHERE EXTRACT(HOUR FROM created_at) >= 4 AND EXTRACT(HOUR FROM created_at) < 7)  AS early_bird_count,
+			COUNT(*) FILTER (WHERE EXTRACT(DOW FROM created_at) IN (0, 6))                                     AS weekend_count,
+			COUNT(*)                                                                                            AS total_count
+		FROM activity_logs
+		WHERE user_id = $1
+		  AND event_type = 'push'
+		  AND created_at >= $2 AND created_at < $3`
+
+	var stats domain.BehavioralStats
+	err := r.pool.QueryRow(ctx, query, userID, from, to).Scan(
+		&stats.NightOwlCount,
+		&stats.EarlyBirdCount,
+		&stats.WeekendCount,
+		&stats.TotalActivityCount,
+	)
+	if err != nil {
+		return &domain.BehavioralStats{}, nil
+	}
+
+	// Get total forum activity
+	forumQuery := `
+		SELECT 
+			(SELECT COUNT(*) FROM threads WHERE author_id = $1 AND created_at >= $2 AND created_at < $3 AND deleted_at IS NULL)
+			+ (SELECT COUNT(*) FROM comments WHERE author_id = $1 AND created_at >= $2 AND created_at < $3 AND deleted_at IS NULL)
+			AS forum_total`
+	err = r.pool.QueryRow(ctx, forumQuery, userID, from, to).Scan(&stats.ForumTotal)
+	if err != nil {
+		stats.ForumTotal = 0
+	}
+
+	return &stats, nil
 }
 
 // CountUserThreads counts threads created by a user within a time range.

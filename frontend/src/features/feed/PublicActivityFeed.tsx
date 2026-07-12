@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import api from "@/lib/api";
-import type { FeedResponse } from "@/types/activity";
-import { ActivityCard } from "./ActivityCard";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { RefreshCw, Inbox, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { useEffect, useRef } from 'react';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import api from '@/lib/api';
+import type { FeedResponse } from '@/types/activity';
+import { ActivityCard } from './ActivityCard';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { RefreshCw, Inbox, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 /**
  * Public activity feed — displays the global community feed
@@ -18,31 +18,18 @@ import Link from "next/link";
  * Uses virtualization to minimize DOM nodes and memory usage.
  */
 export function PublicActivityFeed() {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    refetch,
-  } = useInfiniteQuery<FeedResponse>({
-    queryKey: ["publicActivityFeed"],
-    queryFn: async ({ pageParam }) => {
-      const params = pageParam
-        ? { cursor: pageParam, limit: 20 }
-        : { limit: 20 };
-      const { data } = await api.get<{ ok: boolean; data: FeedResponse }>(
-        "/feed",
-        { params }
-      );
-      return data.data;
-    },
-    initialPageParam: "",
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.next_cursor : undefined,
-    maxPages: 5, // Only keep last 5 pages in memory to limit RAM usage
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch } =
+    useInfiniteQuery<FeedResponse>({
+      queryKey: ['publicActivityFeed'],
+      queryFn: async ({ pageParam }) => {
+        const params = pageParam ? { cursor: pageParam, limit: 20 } : { limit: 20 };
+        const { data } = await api.get<{ ok: boolean; data: FeedResponse }>('/feed', { params });
+        return data.data;
+      },
+      initialPageParam: '',
+      getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.next_cursor : undefined),
+      maxPages: 5, // Only keep last 5 pages in memory to limit RAM usage
+    });
 
   // Virtualizer setup
   const parentRef = useRef<HTMLDivElement>(null);
@@ -61,11 +48,7 @@ export function PublicActivityFeed() {
   // Auto-fetch next page when scrolling near the end
   useEffect(() => {
     if (!lastItem) return;
-    if (
-      lastItem.index >= items.length - 3 &&
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
+    if (lastItem.index >= items.length - 3 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [lastItem, items.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
@@ -123,15 +106,12 @@ export function PublicActivityFeed() {
   }
 
   return (
-    <div
-      ref={parentRef}
-      className="h-[600px] overflow-auto"
-    >
+    <div ref={parentRef} className="h-[600px] overflow-auto">
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,
-          width: "100%",
-          position: "relative",
+          width: '100%',
+          position: 'relative',
         }}
       >
         {virtualItems.map((virtualRow) => {
@@ -143,10 +123,10 @@ export function PublicActivityFeed() {
               data-index={virtualRow.index}
               ref={virtualizer.measureElement}
               style={{
-                position: "absolute",
+                position: 'absolute',
                 top: 0,
                 left: 0,
-                width: "100%",
+                width: '100%',
                 transform: `translateY(${virtualRow.start}px)`,
               }}
             >
@@ -158,11 +138,7 @@ export function PublicActivityFeed() {
                       Loading...
                     </div>
                   ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => fetchNextPage()}
-                    >
+                    <Button variant="outline" size="sm" onClick={() => fetchNextPage()}>
                       Load more
                     </Button>
                   )}

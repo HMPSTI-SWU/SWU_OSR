@@ -14,18 +14,18 @@
  *   (useful for CDN or custom domain setups).
  */
 export function resolveUploadUrl(path: string | undefined | null): string {
-  if (!path) return "";
+  if (!path) return '';
 
   // Already a full URL (e.g., https://...)
-  if (path.startsWith("http://") || path.startsWith("https://")) {
+  if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
 
   // If a dedicated uploads URL is configured (e.g., CDN), use it
-  const uploadsUrl = process.env.NEXT_PUBLIC_UPLOADS_URL || "";
+  const uploadsUrl = process.env.NEXT_PUBLIC_UPLOADS_URL || '';
   if (uploadsUrl) {
     // Remove trailing slash from base, path already starts with /
-    return `${uploadsUrl.replace(/\/$/, "")}${path}`;
+    return `${uploadsUrl.replace(/\/$/, '')}${path}`;
   }
 
   // Default: return relative path as-is.
@@ -39,14 +39,14 @@ export function resolveUploadUrl(path: string | undefined | null): string {
  * This prevents XSS attacks via javascript: or vbscript: URIs.
  */
 export function sanitizeUrl(url: string | undefined | null): string {
-  if (!url) return "";
+  if (!url) return '';
   try {
-    const parsed = new URL(url, "http://localhost");
-    if (["http:", "https:", "blob:", "data:"].includes(parsed.protocol)) {
+    const parsed = new URL(url, 'http://localhost');
+    if (['http:', 'https:', 'blob:', 'data:'].includes(parsed.protocol)) {
       return url;
     }
-    return "";
+    return '';
   } catch {
-    return "";
+    return '';
   }
 }

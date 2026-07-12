@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 interface ContributionHeatmapProps {
   contributionDays: Record<string, number> | undefined;
@@ -13,11 +13,24 @@ function getLevel(count: number): number {
 }
 
 function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  return date.toISOString().split('T')[0];
 }
 
 function getMonthLabel(date: Date): string {
-  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return months[date.getMonth()];
 }
 
@@ -31,7 +44,7 @@ export function ContributionHeatmap({ contributionDays }: ContributionHeatmapPro
   // Find the start date aligned to Sunday
   const endDate = new Date(today);
   const startDate = new Date(today);
-  startDate.setDate(startDate.getDate() - (weeks * 7) + 1);
+  startDate.setDate(startDate.getDate() - weeks * 7 + 1);
   const dayOfWeek = startDate.getDay();
   startDate.setDate(startDate.getDate() - dayOfWeek);
 
@@ -84,7 +97,7 @@ export function ContributionHeatmap({ contributionDays }: ContributionHeatmapPro
               <div
                 key={dayIdx}
                 className={`heatmap-cell w-3 h-3 heatmap-level-${day.level}`}
-                title={`${day.date}: ${day.count} contribution${day.count !== 1 ? "s" : ""}`}
+                title={`${day.date}: ${day.count} contribution${day.count !== 1 ? 's' : ''}`}
               />
             ))}
           </div>
@@ -101,10 +114,7 @@ export function ContributionHeatmap({ contributionDays }: ContributionHeatmapPro
         <div className="flex items-center gap-1 ml-auto">
           <span className="text-[10px] text-gray-400 dark:text-white mr-1">Less</span>
           {[0, 1, 2, 3, 4].map((level) => (
-            <div
-              key={level}
-              className={`w-3 h-3 rounded-sm heatmap-level-${level}`}
-            />
+            <div key={level} className={`w-3 h-3 rounded-sm heatmap-level-${level}`} />
           ))}
           <span className="text-[10px] text-gray-400 dark:text-white ml-1">More</span>
         </div>

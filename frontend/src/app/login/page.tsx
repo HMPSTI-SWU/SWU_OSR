@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthContext } from "@/components/AuthProvider";
-import { LoginForm } from "@/features/auth/LoginForm";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Code2, Shield, Github, ArrowRight } from "lucide-react";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/components/AuthProvider';
+import { LoginForm } from '@/features/auth/LoginForm';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Code2, Shield, Github, ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const { isReady, isAuthenticated } = useAuthContext();
@@ -13,7 +13,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (isReady && isAuthenticated) {
-      router.replace("/dashboard");
+      router.replace('/dashboard');
     }
   }, [isReady, isAuthenticated, router]);
 
@@ -54,8 +54,8 @@ export default function LoginPage() {
               developer community
             </h2>
             <p className="text-gray-600 dark:text-white max-w-sm">
-              Showcase your projects, track contributions, and collaborate with
-              fellow students at STMIK Widya Utama.
+              Showcase your projects, track contributions, and collaborate with fellow students at
+              STMIK Widya Utama.
             </p>
 
             <div className="space-y-4 pt-4">

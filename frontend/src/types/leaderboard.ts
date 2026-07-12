@@ -15,6 +15,7 @@ export interface LeaderboardResult {
   period: LeaderboardPeriod;
   from: string;
   to: string;
+  quarter?: number; // 1-4, present when period is "quarterly"
   entries: LeaderboardEntry[];
 }
 
@@ -30,4 +31,4 @@ export interface UserPointsSummary {
   rank: number;
 }
 
-export type LeaderboardPeriod = "weekly" | "monthly" | "semester" | "all_time";
+export type LeaderboardPeriod = 'quarterly' | 'all_time';

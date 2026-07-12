@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/viper"
@@ -27,6 +28,9 @@ type Config struct {
 	CookieSecure       bool          `mapstructure:"COOKIE_SECURE"`
 	RateLimitIP        int           `mapstructure:"RATE_LIMIT_IP"`
 	RateLimitUser      int           `mapstructure:"RATE_LIMIT_USER"`
+	// SuperAdminNIMs is the list of NIMs that are automatically granted super_admin role on login.
+	// Populated from the SUPER_ADMIN_NIMS env var (comma-separated).
+	SuperAdminNIMs     []string
 }
 
 // Load reads configuration from environment variables with sensible defaults.
@@ -62,6 +66,16 @@ func Load() (*Config, error) {
 	cfg.CookieSecure = viper.GetBool("COOKIE_SECURE")
 	cfg.RateLimitIP = viper.GetInt("RATE_LIMIT_IP")
 	cfg.RateLimitUser = viper.GetInt("RATE_LIMIT_USER")
+
+	// Parse SUPER_ADMIN_NIMS (comma-separated list of NIMs granted super_admin role on login)
+	rawNIMs := viper.GetString("SUPER_ADMIN_NIMS")
+	if rawNIMs != "" {
+		for _, nim := range strings.Split(rawNIMs, ",") {
+			if trimmed := strings.TrimSpace(nim); trimmed != "" {
+				cfg.SuperAdminNIMs = append(cfg.SuperAdminNIMs, trimmed)
+			}
+		}
+	}
 
 	// Validate JWT_SECRET strength
 	if cfg.JWTSecret == "" {

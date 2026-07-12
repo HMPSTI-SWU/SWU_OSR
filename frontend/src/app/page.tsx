@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useAuthContext } from "@/components/AuthProvider";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuthContext } from '@/components/AuthProvider';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /**
  * Root page — just a skeleton that redirects.
@@ -17,13 +17,13 @@ export default function RootPage() {
 
   useEffect(() => {
     if (!isReady) return;
-    router.replace(isAuthenticated ? "/dashboard" : "/welcome");
+    router.replace(isAuthenticated ? '/dashboard' : '/welcome');
   }, [isReady, isAuthenticated, router]);
 
   // 15s timeout fallback
   useEffect(() => {
     const timeout = setTimeout(() => {
-      router.replace("/welcome");
+      router.replace('/welcome');
     }, 15000);
     return () => clearTimeout(timeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps

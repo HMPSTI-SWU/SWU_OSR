@@ -1,21 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { PublicActivityFeed } from "@/features/feed/PublicActivityFeed";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar } from "@/components/ui/avatar";
-import api from "@/lib/api";
-import {
-  Activity,
-  Users,
-  FolderGit2,
-  TrendingUp,
-  Code2,
-  ArrowRight,
-} from "lucide-react";
+import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
+import { PublicActivityFeed } from '@/features/feed/PublicActivityFeed';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Avatar } from '@/components/ui/avatar';
+import api from '@/lib/api';
+import { Activity, Users, FolderGit2, TrendingUp, Code2, ArrowRight } from 'lucide-react';
 
 // --- Types ---
 interface CommunityStats {
@@ -47,21 +40,17 @@ interface PopularRepo {
  */
 export default function FeedPage() {
   const { data: stats } = useQuery<CommunityStats>({
-    queryKey: ["communityStats"],
+    queryKey: ['communityStats'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: CommunityStats }>(
-        "/stats"
-      );
+      const { data } = await api.get<{ ok: boolean; data: CommunityStats }>('/stats');
       return data.data;
     },
   });
 
   const { data: popularRepos } = useQuery<PopularRepo[]>({
-    queryKey: ["popularRepos"],
+    queryKey: ['popularRepos'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: PopularRepo[] }>(
-        "/repos/popular"
-      );
+      const { data } = await api.get<{ ok: boolean; data: PopularRepo[] }>('/repos/popular');
       return data.data;
     },
   });
@@ -74,7 +63,7 @@ export default function FeedPage() {
       github_username: string;
     }>;
   }>({
-    queryKey: ["membersPreview"],
+    queryKey: ['membersPreview'],
     queryFn: async () => {
       const { data } = await api.get<{
         ok: boolean;
@@ -87,7 +76,7 @@ export default function FeedPage() {
           }>;
           total: number;
         };
-      }>("/members");
+      }>('/members');
       return data.data;
     },
   });
@@ -96,9 +85,7 @@ export default function FeedPage() {
     <div className="mx-auto max-w-geist-page px-6 py-8">
       {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-display-md text-geist-ink dark:text-white mb-2">
-          Community Feed
-        </h1>
+        <h1 className="text-display-md text-geist-ink dark:text-white mb-2">Community Feed</h1>
         <p className="text-body-md text-geist-body dark:text-gray-300">
           See what the STMIK Widya Utama open source community is building.
         </p>
@@ -174,10 +161,10 @@ function CommunityStatsBar({ stats }: { stats: CommunityStats | undefined }) {
   }
 
   const items = [
-    { icon: Users, label: "Members", value: stats.total_members },
-    { icon: FolderGit2, label: "Repositories", value: stats.total_repos },
-    { icon: Activity, label: "This week", value: stats.commits_this_week },
-    { icon: TrendingUp, label: "Active today", value: stats.active_today },
+    { icon: Users, label: 'Members', value: stats.total_members },
+    { icon: FolderGit2, label: 'Repositories', value: stats.total_repos },
+    { icon: Activity, label: 'This week', value: stats.commits_this_week },
+    { icon: TrendingUp, label: 'Active today', value: stats.active_today },
   ];
 
   return (
@@ -194,12 +181,8 @@ function CommunityStatsBar({ stats }: { stats: CommunityStats | undefined }) {
                 <Icon className="h-4 w-4 text-geist-ink dark:text-white" />
               </div>
               <div>
-                <p className="text-display-sm text-geist-ink dark:text-white">
-                  {item.value}
-                </p>
-                <p className="text-caption text-geist-mute dark:text-gray-400">
-                  {item.label}
-                </p>
+                <p className="text-display-sm text-geist-ink dark:text-white">{item.value}</p>
+                <p className="text-caption text-geist-mute dark:text-gray-400">{item.label}</p>
               </div>
             </div>
           </div>
@@ -239,7 +222,7 @@ function PopularReposSection({ repos }: { repos: PopularRepo[] | undefined }) {
                   )}
                 </div>
                 <p className="text-caption text-geist-mute dark:text-gray-400 line-clamp-2 mb-3">
-                  {repo.description || "No description"}
+                  {repo.description || 'No description'}
                 </p>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -249,7 +232,7 @@ function PopularReposSection({ repos }: { repos: PopularRepo[] | undefined }) {
                       </Badge>
                     )}
                     <Badge variant="default" className="text-[10px]">
-                      {repo.academic_tag.replace("_", " ")}
+                      {repo.academic_tag.replace('_', ' ')}
                     </Badge>
                   </div>
                   <div className="flex items-center gap-1">
@@ -324,11 +307,7 @@ function ActiveMembersSection({
       </div>
       <div className="flex flex-wrap gap-2">
         {members.slice(0, 12).map((member) => (
-          <Link
-            key={member.id}
-            href={`/profiles/${member.alias}`}
-            title={member.alias}
-          >
+          <Link key={member.id} href={`/profiles/${member.alias}`} title={member.alias}>
             <Avatar
               src={member.avatar_url}
               alt={member.alias}

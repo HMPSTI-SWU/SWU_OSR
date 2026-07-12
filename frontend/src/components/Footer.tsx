@@ -1,7 +1,7 @@
-import Link from "next/link";
-import Image from "next/image";
-import { Github, ExternalLink } from "lucide-react";
-import logoOrbit from "@/assets/logo orbit.png";
+import Link from 'next/link';
+import Image from 'next/image';
+import { Github, ExternalLink } from 'lucide-react';
+import logoOrbit from '@/assets/logo orbit.png';
 
 export function Footer() {
   return (
@@ -19,13 +19,11 @@ export function Footer() {
                 height={28}
                 className="dark:invert"
               />
-              <span className="text-body-sm-strong text-geist-ink dark:text-white">
-                ORBIT
-              </span>
+              <span className="text-body-sm-strong text-geist-ink dark:text-white">ORBIT</span>
             </Link>
             <p className="mt-3 text-body-sm text-geist-body dark:text-white max-w-xs">
-              Open Source Repository — Platform mahasiswa untuk showcase karya,
-              kolaborasi, dan membangun portofolio.
+              Open Source Repository — Platform mahasiswa untuk showcase karya, kolaborasi, dan
+              membangun portofolio.
             </p>
           </div>
 
@@ -80,9 +78,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <span className="text-body-sm text-geist-body dark:text-white">
-                  HMPSTI SWU
-                </span>
+                <span className="text-body-sm text-geist-body dark:text-white">HMPSTI SWU</span>
               </li>
               <li>
                 <span className="text-body-sm text-geist-body dark:text-white">
@@ -124,8 +120,8 @@ export function Footer() {
         {/* Bottom bar — hairline separator */}
         <div className="border-t border-geist-hairline dark:border-neutral-800 py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-caption text-geist-mute dark:text-white">
-            &copy; {new Date().getFullYear()} HMPSTI SWU — STMIK Widya Utama
-            Purwokerto. Built with open source.
+            &copy; {new Date().getFullYear()} HMPSTI SWU — STMIK Widya Utama Purwokerto. Built with
+            open source.
           </p>
           <div className="flex items-center gap-4">
             <a

@@ -1,72 +1,55 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useCallback } from "react";
-import Link from "next/link";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import api from "@/lib/api";
-import type { FeedResponse } from "@/types/activity";
-import { useCurrentUser } from "@/hooks/useAuth";
-import { ActivityCard } from "./ActivityCard";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/toast";
-import { FolderGit2, RefreshCw, Inbox } from "lucide-react";
+import { useEffect, useRef, useCallback } from 'react';
+import Link from 'next/link';
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useVirtualizer } from '@tanstack/react-virtual';
+import api from '@/lib/api';
+import type { FeedResponse } from '@/types/activity';
+import { useCurrentUser } from '@/hooks/useAuth';
+import { ActivityCard } from './ActivityCard';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
+import { FolderGit2, RefreshCw, Inbox } from 'lucide-react';
 
 export function ActivityFeed() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-    refetch,
-  } = useInfiniteQuery<FeedResponse>({
-    queryKey: ["activityFeed"],
-    queryFn: async ({ pageParam }) => {
-      const params = pageParam
-        ? { cursor: pageParam, limit: 20 }
-        : { limit: 20 };
-      const { data } = await api.get<{ ok: boolean; data: FeedResponse }>(
-        "/feed",
-        { params }
-      );
-      return data.data;
-    },
-    initialPageParam: "",
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.next_cursor : undefined,
-    maxPages: 5, // Only keep last 5 pages in memory to limit RAM usage
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError, refetch } =
+    useInfiniteQuery<FeedResponse>({
+      queryKey: ['activityFeed'],
+      queryFn: async ({ pageParam }) => {
+        const params = pageParam ? { cursor: pageParam, limit: 20 } : { limit: 20 };
+        const { data } = await api.get<{ ok: boolean; data: FeedResponse }>('/feed', { params });
+        return data.data;
+      },
+      initialPageParam: '',
+      getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.next_cursor : undefined),
+      maxPages: 5, // Only keep last 5 pages in memory to limit RAM usage
+    });
 
   const syncMutation = useMutation({
     mutationFn: async () => {
       const { data } = await api.post<{
         ok: boolean;
         data: { synced: number };
-      }>("/activity/sync");
+      }>('/activity/sync');
       return data.data;
     },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ["activityFeed"] });
+      queryClient.invalidateQueries({ queryKey: ['activityFeed'] });
       if (result.synced > 0) {
-        toast(`Synced ${result.synced} new activities from GitHub`, "success");
+        toast(`Synced ${result.synced} new activities from GitHub`, 'success');
       } else {
-        toast("Already up to date — no new activities found", "success");
+        toast('Already up to date — no new activities found', 'success');
       }
     },
     onError: () => {
-      toast("Failed to sync activity from GitHub", "error");
+      toast('Failed to sync activity from GitHub', 'error');
     },
   });
 
@@ -99,11 +82,7 @@ export function ActivityFeed() {
 
   useEffect(() => {
     if (!lastItem) return;
-    if (
-      lastItem.index >= items.length - 3 &&
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
+    if (lastItem.index >= items.length - 3 && hasNextPage && !isFetchingNextPage) {
       fetchNextPage();
     }
   }, [lastItem, items.length, hasNextPage, isFetchingNextPage, fetchNextPage]);
@@ -148,8 +127,8 @@ export function ActivityFeed() {
           </h3>
           <p className="text-body-sm text-geist-body dark:text-white max-w-sm mx-auto mb-6">
             {user
-              ? "Sync your GitHub activity or add repos to your showcase to start tracking contributions."
-              : "Sign in and add repos to your showcase to start tracking open source contributions."}
+              ? 'Sync your GitHub activity or add repos to your showcase to start tracking contributions.'
+              : 'Sign in and add repos to your showcase to start tracking open source contributions.'}
           </p>
           <div className="flex items-center justify-center gap-3">
             {user && (
@@ -164,15 +143,13 @@ export function ActivityFeed() {
                 ) : (
                   <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
                 )}
-                {syncMutation.isPending
-                  ? "Syncing..."
-                  : "Sync GitHub activity"}
+                {syncMutation.isPending ? 'Syncing...' : 'Sync GitHub activity'}
               </Button>
             )}
-            <Link href={user ? "/showcase" : "/login"}>
+            <Link href={user ? '/showcase' : '/login'}>
               <Button variant="outline" size="sm">
                 <FolderGit2 className="mr-1.5 h-3.5 w-3.5" />
-                {user ? "Go to Showcase" : "Sign In"}
+                {user ? 'Go to Showcase' : 'Sign In'}
               </Button>
             </Link>
           </div>
@@ -197,21 +174,18 @@ export function ActivityFeed() {
             ) : (
               <RefreshCw className="mr-1.5 h-3 w-3" />
             )}
-            {syncMutation.isPending ? "Syncing..." : "Sync from GitHub"}
+            {syncMutation.isPending ? 'Syncing...' : 'Sync from GitHub'}
           </Button>
         </div>
       )}
 
       {/* Virtualized feed list */}
-      <div
-        ref={parentRef}
-        className="h-[600px] overflow-auto"
-      >
+      <div ref={parentRef} className="h-[600px] overflow-auto">
         <div
           style={{
             height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
+            width: '100%',
+            position: 'relative',
           }}
         >
           {virtualItems.map((virtualRow) => {
@@ -223,10 +197,10 @@ export function ActivityFeed() {
                 data-index={virtualRow.index}
                 ref={virtualizer.measureElement}
                 style={{
-                  position: "absolute",
+                  position: 'absolute',
                   top: 0,
                   left: 0,
-                  width: "100%",
+                  width: '100%',
                   transform: `translateY(${virtualRow.start}px)`,
                 }}
               >
@@ -238,11 +212,7 @@ export function ActivityFeed() {
                         Loading...
                       </div>
                     ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => fetchNextPage()}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => fetchNextPage()}>
                         Load more
                       </Button>
                     )}

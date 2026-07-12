@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { useState, useMemo } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import type { ShowcaseRepo, AcademicTag } from "@/types/showcase";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/components/ui/toast";
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import Link from 'next/link';
+import api from '@/lib/api';
+import type { ShowcaseRepo, AcademicTag } from '@/types/showcase';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/toast';
 import {
   ExternalLink,
   Trash2,
@@ -19,14 +19,14 @@ import {
   Webhook,
   ChevronLeft,
   ChevronRight,
-} from "lucide-react";
+} from 'lucide-react';
 
 const ACADEMIC_TAGS: AcademicTag[] = [
-  "coursework",
-  "thesis",
-  "hackathon",
-  "personal_research",
-  "team_project",
+  'coursework',
+  'thesis',
+  'hackathon',
+  'personal_research',
+  'team_project',
 ];
 
 const PAGE_SIZE = 6;
@@ -36,7 +36,7 @@ export function ShowcaseGrid() {
   const { toast } = useToast();
   const [editingTagId, setEditingTagId] = useState<string | null>(null);
   const [editingDescId, setEditingDescId] = useState<string | null>(null);
-  const [editDescValue, setEditDescValue] = useState("");
+  const [editDescValue, setEditDescValue] = useState('');
   const [page, setPage] = useState(0);
 
   const {
@@ -45,11 +45,9 @@ export function ShowcaseGrid() {
     isError,
     refetch,
   } = useQuery<ShowcaseRepo[]>({
-    queryKey: ["showcaseRepos"],
+    queryKey: ['showcaseRepos'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: ShowcaseRepo[] }>(
-        "/showcase"
-      );
+      const { data } = await api.get<{ ok: boolean; data: ShowcaseRepo[] }>('/showcase');
       return data.data;
     },
   });
@@ -59,25 +57,19 @@ export function ShowcaseGrid() {
       await api.delete(`/showcase/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["showcaseRepos"] });
-      toast("Repository removed from showcase", "success");
+      queryClient.invalidateQueries({ queryKey: ['showcaseRepos'] });
+      toast('Repository removed from showcase', 'success');
     },
     onError: () => {
-      toast("Failed to remove repository", "error");
+      toast('Failed to remove repository', 'error');
     },
   });
 
   const updateTagMutation = useMutation({
-    mutationFn: async ({
-      repo,
-      newTag,
-    }: {
-      repo: ShowcaseRepo;
-      newTag: AcademicTag;
-    }) => {
+    mutationFn: async ({ repo, newTag }: { repo: ShowcaseRepo; newTag: AcademicTag }) => {
       await api.delete(`/showcase/${repo.id}`);
       try {
-        await api.post("/showcase", {
+        await api.post('/showcase', {
           selections: [
             {
               repo_id: repo.github_repo_id,
@@ -89,7 +81,7 @@ export function ShowcaseGrid() {
         });
       } catch (postError) {
         try {
-          await api.post("/showcase", {
+          await api.post('/showcase', {
             selections: [
               {
                 repo_id: repo.github_repo_id,
@@ -106,13 +98,13 @@ export function ShowcaseGrid() {
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["showcaseRepos"] });
-      toast("Tag updated successfully", "success");
+      queryClient.invalidateQueries({ queryKey: ['showcaseRepos'] });
+      toast('Tag updated successfully', 'success');
       setEditingTagId(null);
     },
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: ["showcaseRepos"] });
-      toast("Failed to update tag", "error");
+      queryClient.invalidateQueries({ queryKey: ['showcaseRepos'] });
+      toast('Failed to update tag', 'error');
       setEditingTagId(null);
     },
   });
@@ -124,28 +116,22 @@ export function ShowcaseGrid() {
   };
 
   const updateDescMutation = useMutation({
-    mutationFn: async ({
-      id,
-      description,
-    }: {
-      id: string;
-      description: string;
-    }) => {
+    mutationFn: async ({ id, description }: { id: string; description: string }) => {
       await api.patch(`/showcase/${id}`, { description });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["showcaseRepos"] });
-      toast("Description updated", "success");
+      queryClient.invalidateQueries({ queryKey: ['showcaseRepos'] });
+      toast('Description updated', 'success');
       setEditingDescId(null);
     },
     onError: () => {
-      toast("Failed to update description", "error");
+      toast('Failed to update description', 'error');
     },
   });
 
   const handleStartEditDesc = (repo: ShowcaseRepo) => {
     setEditingDescId(repo.id);
-    setEditDescValue(repo.description || "");
+    setEditDescValue(repo.description || '');
   };
 
   const handleSaveDesc = (repoId: string) => {
@@ -199,8 +185,7 @@ export function ShowcaseGrid() {
             No repositories yet.
           </h3>
           <p className="text-body-sm text-geist-body dark:text-white max-w-sm mx-auto">
-            Add your best GitHub repositories below to start building your
-            showcase portfolio.
+            Add your best GitHub repositories below to start building your showcase portfolio.
           </p>
         </CardContent>
       </Card>
@@ -247,8 +232,8 @@ export function ShowcaseGrid() {
                       value={editDescValue}
                       onChange={(e) => setEditDescValue(e.target.value)}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter") handleSaveDesc(repo.id);
-                        if (e.key === "Escape") setEditingDescId(null);
+                        if (e.key === 'Enter') handleSaveDesc(repo.id);
+                        if (e.key === 'Escape') setEditingDescId(null);
                       }}
                       className="flex-1 px-2 py-1 text-sm border border-geist-hairline dark:border-neutral-700 rounded-geist-sm bg-geist-canvas dark:bg-neutral-900 dark:text-white focus:outline-none focus:border-geist-hairline-strong dark:focus:border-neutral-600"
                       placeholder="Add a description..."
@@ -274,7 +259,7 @@ export function ShowcaseGrid() {
                     className="cursor-pointer hover:text-geist-ink dark:hover:text-white transition-colors"
                     title="Click to edit description"
                   >
-                    {repo.description || "Click to add description..."}
+                    {repo.description || 'Click to add description...'}
                   </span>
                 )}
               </div>
@@ -293,19 +278,19 @@ export function ShowcaseGrid() {
                         onClick={() => handleTagChange(repo, tag)}
                         className={`px-2 py-0.5 text-[10px] rounded-geist-full border transition-all ${
                           tag === repo.academic_tag
-                            ? "bg-geist-primary text-geist-on-primary border-transparent dark:bg-white dark:text-black"
-                            : "bg-geist-canvas text-geist-body border-geist-hairline hover:border-geist-hairline-strong dark:bg-neutral-900 dark:text-white dark:border-neutral-700 dark:hover:border-neutral-600"
+                            ? 'bg-geist-primary text-geist-on-primary border-transparent dark:bg-white dark:text-black'
+                            : 'bg-geist-canvas text-geist-body border-geist-hairline hover:border-geist-hairline-strong dark:bg-neutral-900 dark:text-white dark:border-neutral-700 dark:hover:border-neutral-600'
                         }`}
                         disabled={updateTagMutation.isPending}
                       >
-                        {tag.replace("_", " ")}
+                        {tag.replace('_', ' ')}
                       </button>
                     ))}
                   </div>
                 ) : (
                   <div className="flex items-center gap-1.5">
                     <Badge variant="default" className="text-[10px]">
-                      {repo.academic_tag.replace("_", " ")}
+                      {repo.academic_tag.replace('_', ' ')}
                     </Badge>
                     <button
                       onClick={() => setEditingTagId(repo.id)}
@@ -328,10 +313,7 @@ export function ShowcaseGrid() {
                   Discussions
                 </Link>
                 <a
-                  href={
-                    repo.html_url ||
-                    `https://github.com/${repo.repo_full_name}`
-                  }
+                  href={repo.html_url || `https://github.com/${repo.repo_full_name}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-caption text-geist-mute dark:text-white hover:text-geist-ink dark:hover:text-white flex items-center gap-1 transition-colors"

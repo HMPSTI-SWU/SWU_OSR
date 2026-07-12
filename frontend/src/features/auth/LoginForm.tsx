@@ -1,23 +1,17 @@
-"use client";
+'use client';
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useSIAKADLogin } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import { AlertCircle, LogIn } from "lucide-react";
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useSIAKADLogin } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { AlertCircle, LogIn } from 'lucide-react';
 
 const loginSchema = z.object({
-  nim: z.string().min(1, "NIM is required"),
-  password: z.string().min(1, "Password is required"),
+  nim: z.string().min(1, 'NIM is required'),
+  password: z.string().min(1, 'Password is required'),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -46,25 +40,16 @@ export function LoginForm() {
         </div>
         <CardTitle className="text-display-md">Sign in.</CardTitle>
         <CardDescription className="mt-2">
-          Use your SIAKAD credentials to authenticate, then link your GitHub
-          account.
+          Use your SIAKAD credentials to authenticate, then link your GitHub account.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <label
-              htmlFor="nim"
-              className="text-body-sm-strong text-geist-ink dark:text-white"
-            >
+            <label htmlFor="nim" className="text-body-sm-strong text-geist-ink dark:text-white">
               NIM (Student ID)
             </label>
-            <Input
-              id="nim"
-              placeholder="Enter your NIM"
-              {...register("nim")}
-              className="h-12"
-            />
+            <Input id="nim" placeholder="Enter your NIM" {...register('nim')} className="h-12" />
             {errors.nim && (
               <p className="text-caption text-geist-error dark:text-white flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />
@@ -83,7 +68,7 @@ export function LoginForm() {
               id="password"
               type="password"
               placeholder="Enter your password"
-              {...register("password")}
+              {...register('password')}
               className="h-12"
             />
             {errors.password && (
@@ -101,12 +86,8 @@ export function LoginForm() {
               </p>
             </div>
           )}
-          <Button
-            type="submit"
-            className="w-full h-12"
-            disabled={login.isPending}
-          >
-            {login.isPending ? "Authenticating..." : "Continue with SIAKAD"}
+          <Button type="submit" className="w-full h-12" disabled={login.isPending}>
+            {login.isPending ? 'Authenticating...' : 'Continue with SIAKAD'}
           </Button>
           <p className="text-caption text-center text-geist-mute dark:text-white pt-2">
             By signing in, you agree to use this platform responsibly.

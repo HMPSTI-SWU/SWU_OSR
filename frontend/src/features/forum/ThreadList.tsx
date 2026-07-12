@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import type { ThreadList as ThreadListType } from "@/types/forum";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { MessageSquare, Clock, MessageCircle } from "lucide-react";
+import { useInfiniteQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import api from '@/lib/api';
+import type { ThreadList as ThreadListType } from '@/types/forum';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { MessageSquare, Clock, MessageCircle } from 'lucide-react';
 
 interface ThreadListProps {
   repoId: string;
@@ -26,33 +26,24 @@ function getRelativeTime(dateString: string): string {
   if (days > 0) return `${days}d ago`;
   if (hours > 0) return `${hours}h ago`;
   if (minutes > 0) return `${minutes}m ago`;
-  return "just now";
+  return 'just now';
 }
 
 export function ThreadList({ repoId }: ThreadListProps) {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    isError,
-  } = useInfiniteQuery<ThreadListType>({
-    queryKey: ["threads", repoId],
-    queryFn: async ({ pageParam }) => {
-      const params = pageParam
-        ? { cursor: pageParam, limit: 20 }
-        : { limit: 20 };
-      const { data } = await api.get<{ ok: boolean; data: ThreadListType }>(
-        `/repos/${repoId}/threads`,
-        { params }
-      );
-      return data.data;
-    },
-    initialPageParam: "",
-    getNextPageParam: (lastPage) =>
-      lastPage.has_more ? lastPage.next_cursor : undefined,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, isError } =
+    useInfiniteQuery<ThreadListType>({
+      queryKey: ['threads', repoId],
+      queryFn: async ({ pageParam }) => {
+        const params = pageParam ? { cursor: pageParam, limit: 20 } : { limit: 20 };
+        const { data } = await api.get<{ ok: boolean; data: ThreadListType }>(
+          `/repos/${repoId}/threads`,
+          { params }
+        );
+        return data.data;
+      },
+      initialPageParam: '',
+      getNextPageParam: (lastPage) => (lastPage.has_more ? lastPage.next_cursor : undefined),
+    });
 
   if (isLoading) {
     return (
@@ -100,10 +91,7 @@ export function ThreadList({ repoId }: ThreadListProps) {
   return (
     <div className="space-y-3">
       {threads.map((thread) => (
-        <Link
-          key={thread.id}
-          href={`/repos/${repoId}/discussions/${thread.id}`}
-        >
+        <Link key={thread.id} href={`/repos/${repoId}/discussions/${thread.id}`}>
           <Card className="hover:border-primary-200 hover:shadow-sm transition-all duration-200 cursor-pointer group">
             <CardContent className="p-4">
               <div className="flex items-start justify-between gap-3">
@@ -135,12 +123,8 @@ export function ThreadList({ repoId }: ThreadListProps) {
       ))}
       {hasNextPage && (
         <div className="flex justify-center pt-4">
-          <Button
-            variant="outline"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? "Loading..." : "Load More"}
+          <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
+            {isFetchingNextPage ? 'Loading...' : 'Load More'}
           </Button>
         </div>
       )}

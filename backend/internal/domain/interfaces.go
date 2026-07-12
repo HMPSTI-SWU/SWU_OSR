@@ -80,3 +80,25 @@ type RefreshToken struct {
 	CreatedAt time.Time  `json:"created_at"`
 	RevokedAt *time.Time `json:"-"`
 }
+
+// SkillRepository defines data access methods for the skill system.
+type SkillRepository interface {
+	// Master list
+	ListSkills(ctx context.Context) ([]Skill, error)
+	GetSkillByID(ctx context.Context, id uuid.UUID) (*Skill, error)
+	GetSkillBySlug(ctx context.Context, slug string) (*Skill, error)
+	CreateSkill(ctx context.Context, skill *Skill) error
+	DeleteSkill(ctx context.Context, id uuid.UUID) error
+
+	// User skills
+	GetUserSkills(ctx context.Context, userID uuid.UUID, currentUserID *uuid.UUID) ([]UserSkill, error)
+	AddUserSkill(ctx context.Context, userID, skillID uuid.UUID) (*UserSkill, error)
+	RemoveUserSkill(ctx context.Context, userID, skillID uuid.UUID) error
+	CountUserSkills(ctx context.Context, userID uuid.UUID) (int, error)
+
+	// Endorsements
+	AddEndorsement(ctx context.Context, userSkillID, endorserID uuid.UUID) error
+	RemoveEndorsement(ctx context.Context, userSkillID, endorserID uuid.UUID) error
+	GetUserSkillByID(ctx context.Context, userSkillID uuid.UUID) (*UserSkill, error)
+}
+

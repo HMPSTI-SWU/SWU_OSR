@@ -11,5 +11,5 @@ export interface PendingSession {
 export interface AuthResult {
   access_token: string;
   refresh_token: string;
-  user: import("./user").User;
+  user: import('./user').User;
 }

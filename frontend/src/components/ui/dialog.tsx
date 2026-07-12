@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
-import { X } from "lucide-react";
+import * as React from 'react';
+import { cn } from '@/lib/utils';
+import { X } from 'lucide-react';
 
 interface DialogProps {
   open: boolean;
@@ -28,37 +28,19 @@ function Dialog({ open, onOpenChange, children }: DialogProps) {
   );
 }
 
-function DialogHeader({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('flex flex-col space-y-1.5 p-6 pb-0', className)} {...props} />;
+}
+
+function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
-    <div
-      className={cn("flex flex-col space-y-1.5 p-6 pb-0", className)}
-      {...props}
-    />
+    <h2 className={cn('text-display-sm text-geist-ink dark:text-white', className)} {...props} />
   );
 }
 
-function DialogTitle({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLHeadingElement>) {
+function DialogContent({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <h2
-      className={cn("text-display-sm text-geist-ink dark:text-white", className)}
-      {...props}
-    />
-  );
-}
-
-function DialogContent({
-  className,
-  children,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
-  return (
-    <div className={cn("p-6", className)} {...props}>
+    <div className={cn('p-6', className)} {...props}>
       {children}
     </div>
   );

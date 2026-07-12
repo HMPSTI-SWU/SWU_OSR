@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { ThreadDetail } from "@/features/forum/ThreadDetail";
+import { ThreadDetail } from '@/features/forum/ThreadDetail';
 
 interface ThreadPageProps {
   params: { id: string; threadId: string };

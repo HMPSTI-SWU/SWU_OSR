@@ -35,12 +35,19 @@ func (s *leaderboardService) GetLeaderboard(ctx context.Context, period domain.L
 		return nil, err
 	}
 
-	return &domain.LeaderboardResult{
+	result := &domain.LeaderboardResult{
 		Period:  period,
 		From:    from,
 		To:      to,
 		Entries: entries,
-	}, nil
+	}
+
+	// Attach quarter number for quarterly period
+	if period == domain.PeriodQuarterly {
+		result.Quarter = quarterOf(from)
+	}
+
+	return result, nil
 }
 
 // GetUserSummary returns a user's personal points summary for a given period.
@@ -67,7 +74,7 @@ func (s *leaderboardService) GetUserSummary(ctx context.Context, userID uuid.UUI
 
 // RefreshLeaderboard recomputes points for all active users in the given period.
 // Performance: Uses a bounded worker pool (10 goroutines) to parallelize per-user
-// computation, reducing refresh time from O(N×7) sequential to O(N×7/10) parallel.
+// computation, reducing refresh time from O(N×queries) sequential to O(N×queries/10) parallel.
 func (s *leaderboardService) RefreshLeaderboard(ctx context.Context, period domain.LeaderboardPeriod) error {
 	from, to := s.periodWindow(period)
 
@@ -109,20 +116,76 @@ func (s *leaderboardService) RefreshLeaderboard(ctx context.Context, period doma
 }
 
 // computeAndStoreUserPoints calculates and persists a user's points.
+// Anti-gaming measures:
+//  1. Push: per-repo quarterly cap + daily cap + anomaly Z-Score penalty
+//  2. PR: only MERGED PRs get full PointsPRMerged
+//  3. Both push and merged PR points are weighted by repo star multiplier (Repo Reputation)
+//  4. Per-repo quarterly cap on PR merged events (MaxPRPerRepoPerQuarter)
 func (s *leaderboardService) computeAndStoreUserPoints(ctx context.Context, userID uuid.UUID, period domain.LeaderboardPeriod, from, to time.Time) error {
-	// --- Per-repo capped push count ---
-	pushPerRepo, err := s.repo.CountUserPushEventsPerRepo(ctx, userID, from, to)
+	// --- Anomaly coefficient (Z-Score burst detection, runs in PostgreSQL) ---
+	anomalyCoeff, err := s.repo.GetUserAnomalyCoefficient(ctx, userID)
 	if err != nil {
-		return err
+		anomalyCoeff = 1.0 // fail-open: jika gagal, tidak terapkan penalti
 	}
-	pushCount := s.applyCappedCount(pushPerRepo, domain.MaxPushPerRepoPerWeek, from, to)
 
-	// --- Per-repo capped PR count ---
-	prPerRepo, err := s.repo.CountUserPREventsPerRepo(ctx, userID, from, to)
+	// --- Per-repo weighted push count (dengan star multiplier) ---
+	weightedPushPerRepo, err := s.repo.CountUserWeightedPushPerRepo(ctx, userID, from, to)
 	if err != nil {
 		return err
 	}
-	prCount := s.applyCappedCount(prPerRepo, domain.MaxPRPerRepoPerWeek, from, to)
+
+	// Apply per-repo quarterly cap + star multiplier + anomaly coefficient
+	pushPtsFloat := 0.0
+	for _, wrc := range weightedPushPerRepo {
+		capped := wrc.Count
+		if capped > domain.MaxPushPerRepoPerQuarter {
+			capped = domain.MaxPushPerRepoPerQuarter
+		}
+		multiplier := domain.StarMultiplier(wrc.Stars)
+		pushPtsFloat += float64(capped) * float64(domain.PointsPush) * multiplier
+	}
+	// Terapkan daily cap (cegah point explosion dari multi-repo)
+	days := int(to.Sub(from).Hours()/24) + 1
+	if days < 1 {
+		days = 1
+	}
+	maxPushPts := float64((domain.MaxPointsPerDay / domain.PointsPush) * days * domain.PointsPush)
+	if pushPtsFloat > maxPushPts {
+		pushPtsFloat = maxPushPts
+	}
+	// Terapkan anomaly penalty ke push points
+	pushPtsFloat *= anomalyCoeff
+	pushPts := int(pushPtsFloat)
+
+	// --- PR opened (poin kecil, flat, tidak ada star multiplier untuk mencegah spam) ---
+	prOpenedPerRepo, err := s.repo.CountUserPREventsPerRepo(ctx, userID, from, to)
+	if err != nil {
+		return err
+	}
+	prOpenedCount := 0
+	for _, rc := range prOpenedPerRepo {
+		prOpenedCount += rc.Count
+	}
+	const maxOpenedPRsPerQuarter = 50
+	if prOpenedCount > maxOpenedPRsPerQuarter {
+		prOpenedCount = maxOpenedPRsPerQuarter
+	}
+
+	// --- PR merged (poin penuh + star multiplier — kontribusi nyata ke repo penting) ---
+	weightedMergedPerRepo, err := s.repo.CountUserWeightedMergedPRPerRepo(ctx, userID, from, to)
+	if err != nil {
+		return err
+	}
+	mergedPtsFloat := 0.0
+	for _, wrc := range weightedMergedPerRepo {
+		capped := wrc.Count
+		if capped > domain.MaxPRPerRepoPerQuarter {
+			capped = domain.MaxPRPerRepoPerQuarter
+		}
+		multiplier := domain.StarMultiplier(wrc.Stars)
+		mergedPtsFloat += float64(capped) * float64(domain.PointsPRMerged) * multiplier
+	}
+	prPts := int(mergedPtsFloat) + (prOpenedCount * domain.PointsPROpened)
 
 	threadCount, err := s.repo.CountUserThreads(ctx, userID, from, to)
 	if err != nil {
@@ -144,13 +207,10 @@ func (s *leaderboardService) computeAndStoreUserPoints(ctx context.Context, user
 		streak = 0
 	}
 
-	// Calculate points with daily cap applied
-	pushPts := s.capDailyPoints(pushCount, domain.PointsPush, from, to)
-	prPts := prCount * domain.PointsPROpened
 	forumPts := (threadCount * domain.PointsThreadCreated) + (commentCount * domain.PointsCommentPosted)
 	otherPts := showcaseCount * domain.PointsShowcaseAdded
 
-	// Add streak bonus if threshold met
+	// Streak bonus
 	if streak >= domain.StreakThresholdDays {
 		streakBonuses := streak / domain.StreakThresholdDays
 		otherPts += streakBonuses * domain.PointsStreakBonus
@@ -158,21 +218,13 @@ func (s *leaderboardService) computeAndStoreUserPoints(ctx context.Context, user
 
 	totalPts := pushPts + prPts + forumPts + otherPts
 
-	// Persist
 	return s.repo.UpsertPoints(ctx, userID, period, from, to, pushPts, prPts, forumPts, otherPts, totalPts, streak)
 }
 
-// applyCappedCount applies a per-repo weekly cap to event counts.
-// For each repo, only up to maxPerRepoPerWeek events count per week within the period.
-// For periods longer than a week, the cap scales proportionally.
-func (s *leaderboardService) applyCappedCount(perRepo []domain.RepoEventCount, maxPerRepoPerWeek int, from, to time.Time) int {
-	// Calculate how many weeks this period spans (minimum 1)
-	weeks := int(to.Sub(from).Hours()/(24*7)) + 1
-	if weeks < 1 {
-		weeks = 1
-	}
-	maxPerRepo := maxPerRepoPerWeek * weeks
 
+// applyCappedCount applies a flat cap to event counts per repo.
+// For each repo, only up to maxPerRepo events count.
+func (s *leaderboardService) applyCappedCount(perRepo []domain.RepoEventCount, maxPerRepo int) int {
 	total := 0
 	for _, rc := range perRepo {
 		capped := rc.Count
@@ -206,50 +258,57 @@ func (s *leaderboardService) capDailyPoints(count, pointsPerEvent int, from, to 
 // periodWindow returns the start and end time for a given leaderboard period.
 func (s *leaderboardService) periodWindow(period domain.LeaderboardPeriod) (time.Time, time.Time) {
 	now := time.Now()
-	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
 	switch period {
-	case domain.PeriodWeekly:
-		// Start from Monday of the current week
-		weekday := int(today.Weekday())
-		if weekday == 0 {
-			weekday = 7 // Sunday = 7
-		}
-		from := today.AddDate(0, 0, -(weekday - 1))
-		to := from.AddDate(0, 0, 7)
-		return from, to
-
-	case domain.PeriodMonthly:
-		from := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-		to := from.AddDate(0, 1, 0)
-		return from, to
-
-	case domain.PeriodSemester:
-		// Academic semesters: Jan-Jun (even), Jul-Dec (odd)
-		if now.Month() <= 6 {
-			from := time.Date(now.Year(), 1, 1, 0, 0, 0, 0, now.Location())
-			to := time.Date(now.Year(), 7, 1, 0, 0, 0, 0, now.Location())
-			return from, to
-		}
-		from := time.Date(now.Year(), 7, 1, 0, 0, 0, 0, now.Location())
-		to := time.Date(now.Year()+1, 1, 1, 0, 0, 0, 0, now.Location())
-		return from, to
+	case domain.PeriodQuarterly:
+		return currentQuarterWindow(now)
 
 	case domain.PeriodAllTime:
 		// Use fixed sentinel dates so writes and reads always match.
-		// The scheduler and reader must produce the same (from, to) pair.
 		from := time.Date(2020, 1, 1, 0, 0, 0, 0, time.UTC)
 		to := time.Date(2099, 12, 31, 23, 59, 59, 0, time.UTC)
 		return from, to
 
 	default:
-		// Default to weekly
-		weekday := int(today.Weekday())
-		if weekday == 0 {
-			weekday = 7
-		}
-		from := today.AddDate(0, 0, -(weekday - 1))
-		to := from.AddDate(0, 0, 7)
-		return from, to
+		// Default to quarterly
+		return currentQuarterWindow(now)
+	}
+}
+
+// currentQuarterWindow returns the start and end of the current academic/calendar quarter.
+// Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec
+func currentQuarterWindow(now time.Time) (time.Time, time.Time) {
+	year := now.Year()
+	month := now.Month()
+	loc := now.Location()
+
+	var qStart time.Month
+	switch {
+	case month <= 3:
+		qStart = 1 // Q1
+	case month <= 6:
+		qStart = 4 // Q2
+	case month <= 9:
+		qStart = 7 // Q3
+	default:
+		qStart = 10 // Q4
+	}
+
+	from := time.Date(year, qStart, 1, 0, 0, 0, 0, loc)
+	to := from.AddDate(0, 3, 0) // Add 3 months
+	return from, to
+}
+
+// quarterOf returns the quarter number (1–4) for a given time.
+func quarterOf(t time.Time) int {
+	switch {
+	case t.Month() <= 3:
+		return 1
+	case t.Month() <= 6:
+		return 2
+	case t.Month() <= 9:
+		return 3
+	default:
+		return 4
 	}
 }

@@ -1,20 +1,18 @@
-"use client";
+'use client';
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import api from "@/lib/api";
-import type { Notification } from "@/types/forum";
-import { DropdownMenu, DropdownMenuItem } from "@/components/ui/dropdown-menu";
-import { Bell } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '@/lib/api';
+import type { Notification } from '@/types/forum';
+import { DropdownMenu, DropdownMenuItem } from '@/components/ui/dropdown-menu';
+import { Bell } from 'lucide-react';
 
 export function NotificationBell() {
   const queryClient = useQueryClient();
 
   const { data: notifications } = useQuery<Notification[]>({
-    queryKey: ["notifications"],
+    queryKey: ['notifications'],
     queryFn: async () => {
-      const { data } = await api.get<{ ok: boolean; data: Notification[] }>(
-        "/notifications"
-      );
+      const { data } = await api.get<{ ok: boolean; data: Notification[] }>('/notifications');
       return data.data;
     },
     refetchInterval: 30000,
@@ -25,7 +23,7 @@ export function NotificationBell() {
       await api.put(`/notifications/${id}/read`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -38,7 +36,7 @@ export function NotificationBell() {
           <Bell className="h-5 w-5 text-gray-600 dark:text-white" />
           {unreadCount > 0 && (
             <span className="absolute top-1 right-1 h-4 w-4 rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center">
-              {unreadCount > 9 ? "9+" : unreadCount}
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
         </button>
@@ -56,7 +54,7 @@ export function NotificationBell() {
               onClick={() => {
                 if (!notif.is_read) markRead.mutate(notif.id);
               }}
-              className={notif.is_read ? "opacity-60" : "font-medium"}
+              className={notif.is_read ? 'opacity-60' : 'font-medium'}
             >
               <p className="text-sm">{notif.message}</p>
               <p className="text-xs text-gray-400 dark:text-white mt-0.5">

@@ -102,6 +102,7 @@ func main() {
 	commentRepo := repository.NewCommentRepo(pool)
 	notifRepo := repository.NewNotificationRepo(pool)
 	leaderboardRepo := repository.NewLeaderboardRepo(pool)
+	skillRepo := repository.NewSkillRepo(pool)
 
 	// Initialize external services
 	githubSvc := github.NewService(cfg.GitHubClientID, cfg.GitHubClientSecret, cfg.GitHubRedirectURI)
@@ -121,6 +122,7 @@ func main() {
 	forumSvc := service.NewForumService(threadRepo, commentRepo, notifRepo, showcaseRepo, userRepo, logger)
 	leaderboardSvc := service.NewLeaderboardService(leaderboardRepo, logger)
 	cachedLeaderboardSvc := cache.NewCachedLeaderboardService(leaderboardSvc, rdb, logger)
+	skillSvc := service.NewSkillService(skillRepo)
 
 	// Wire aggregator into showcase for auto-sync on repo add
 	showcaseSvc.SetAggregatorService(aggregatorSvc)
@@ -141,6 +143,8 @@ func main() {
 	communityHandler := handler.NewCommunityHandler(pool, rdb)
 	leaderboardHandler := handler.NewLeaderboardHandler(cachedLeaderboardSvc)
 	bannerHandler := handler.NewBannerHandler(userRepo, bannerStorage)
+	adminHandler := handler.NewAdminHandler(pool)
+	skillHandler := handler.NewSkillHandler(skillSvc)
 
 	// Initialize Prometheus metrics
 	appMetrics := metrics.New()
@@ -194,10 +198,12 @@ func main() {
 			r.Get("/profiles/{alias}", profileHandler.HandleGetPublicProfile)
 			r.Get("/feed", aggregatorHandler.HandleGetFeed)
 			r.Get("/users/{id}/activity", aggregatorHandler.HandleGetUserActivity)
+			r.Get("/users/{id}/skills", skillHandler.HandleGetUserSkills)
 			r.Get("/repos/{id}", showcaseHandler.HandleGetPublicRepo)
 			r.Get("/repos/{id}/activity", aggregatorHandler.HandleGetRepoActivity)
 			r.Get("/repos/{id}/threads", forumHandler.HandleListThreads)
 			r.Get("/threads/{id}", forumHandler.HandleGetThread)
+			r.Get("/skills", skillHandler.HandleListSkills)
 
 			// Performance: Cache-Control headers for stable/slow-changing endpoints
 			r.With(mw.CacheControl(60)).Get("/members", profileHandler.HandleListMembers)
@@ -244,6 +250,22 @@ func main() {
 			r.Get("/notifications", forumHandler.HandleListNotifications)
 			r.Put("/notifications/{id}/read", forumHandler.HandleMarkNotificationRead)
 			r.Get("/leaderboard/me", leaderboardHandler.HandleGetMyPoints)
+
+			// Skill routes (auth required to add/endorse)
+			r.Post("/profile/skills", skillHandler.HandleAddSkill)
+			r.Delete("/profile/skills/{skill_id}", skillHandler.HandleRemoveSkill)
+			r.Post("/skills/{user_skill_id}/endorse", skillHandler.HandleEndorseSkill)
+			r.Delete("/skills/{user_skill_id}/endorse", skillHandler.HandleUnendorseSkill)
+		})
+
+		// Admin routes (super_admin only)
+		r.Group(func(r chi.Router) {
+			r.Use(mw.JWTAuth(cfg.JWTSecret))
+			r.Use(mw.RequireSuperAdmin)
+			r.Get("/admin/users", adminHandler.HandleListUsers)
+			r.Put("/admin/users/{id}/role", adminHandler.HandleUpdateUserRole)
+			r.Post("/admin/skills", skillHandler.HandleAdminCreateSkill)
+			r.Delete("/admin/skills/{id}", skillHandler.HandleAdminDeleteSkill)
 		})
 	})
 

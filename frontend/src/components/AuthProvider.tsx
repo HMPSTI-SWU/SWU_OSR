@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { rehydrateToken, getAccessToken, hasLoggedInHint } from "@/lib/auth";
+import * as React from 'react';
+import { rehydrateToken, getAccessToken, hasLoggedInHint } from '@/lib/auth';
 
 interface AuthContextValue {
   /** True once the initial token rehydration attempt has completed. */
@@ -66,7 +66,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
     init();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const value = React.useMemo(

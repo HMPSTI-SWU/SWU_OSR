@@ -1,24 +1,17 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import api from "@/lib/api";
-import type { PublicProfile } from "@/types/user";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Users,
-  Search,
-  GitBranch,
-  FolderGit2,
-  ExternalLink,
-  UserCircle,
-} from "lucide-react";
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import Link from 'next/link';
+import api from '@/lib/api';
+import type { PublicProfile } from '@/types/user';
+import { Avatar } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Users, Search, GitBranch, FolderGit2, ExternalLink, UserCircle } from 'lucide-react';
 
 interface MembersResponse {
   members: PublicProfile[];
@@ -26,18 +19,16 @@ interface MembersResponse {
 }
 
 export default function MembersPage() {
-  const [search, setSearch] = useState("");
-  const [roleFilter, setRoleFilter] = useState<"all" | "student" | "faculty">(
-    "all"
-  );
+  const [search, setSearch] = useState('');
+  const [roleFilter, setRoleFilter] = useState<'all' | 'student' | 'faculty'>('all');
 
   const { data, isLoading, isError, refetch } = useQuery<MembersResponse>({
-    queryKey: ["members"],
+    queryKey: ['members'],
     queryFn: async () => {
       const { data } = await api.get<{
         ok: boolean;
         data: MembersResponse;
-      }>("/members");
+      }>('/members');
       return data.data;
     },
     retry: 1,
@@ -48,12 +39,11 @@ export default function MembersPage() {
   // Client-side filtering
   const filtered = members.filter((m) => {
     const matchesSearch =
-      search === "" ||
+      search === '' ||
       m.alias.toLowerCase().includes(search.toLowerCase()) ||
       (m.bio && m.bio.toLowerCase().includes(search.toLowerCase())) ||
-      (m.github_username &&
-        m.github_username.toLowerCase().includes(search.toLowerCase()));
-    const matchesRole = roleFilter === "all" || m.role === roleFilter;
+      (m.github_username && m.github_username.toLowerCase().includes(search.toLowerCase()));
+    const matchesRole = roleFilter === 'all' || m.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -66,9 +56,7 @@ export default function MembersPage() {
             <Users className="h-5 w-5 text-purple-600" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Discover Members
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Discover Members</h1>
             <p className="text-sm text-gray-500 dark:text-white">
               {data?.total ?? 0} developers in the community
             </p>
@@ -88,17 +76,17 @@ export default function MembersPage() {
           />
         </div>
         <div className="flex gap-2">
-          {(["all", "student", "faculty"] as const).map((role) => (
+          {(['all', 'student', 'faculty'] as const).map((role) => (
             <button
               key={role}
               onClick={() => setRoleFilter(role)}
               className={`px-4 py-2 text-sm font-medium rounded-lg border transition-all ${
                 roleFilter === role
-                  ? "bg-primary-600 text-white border-primary-600 shadow-sm"
-                  : "bg-white dark:bg-neutral-900 text-gray-600 dark:text-white border-gray-200 dark:border-neutral-800 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-neutral-800"
+                  ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                  : 'bg-white dark:bg-neutral-900 text-gray-600 dark:text-white border-gray-200 dark:border-neutral-800 hover:border-primary-300 hover:bg-primary-50 dark:hover:bg-neutral-800'
               }`}
             >
-              {role === "all" ? "All" : role.charAt(0).toUpperCase() + role.slice(1)}
+              {role === 'all' ? 'All' : role.charAt(0).toUpperCase() + role.slice(1)}
             </button>
           ))}
         </div>
@@ -136,12 +124,12 @@ export default function MembersPage() {
               <UserCircle className="h-8 w-8 text-gray-300" />
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">
-              {search ? "No members found" : "No members yet"}
+              {search ? 'No members found' : 'No members yet'}
             </h3>
             <p className="text-sm text-gray-500 dark:text-white max-w-sm mx-auto">
               {search
                 ? `No results for "${search}". Try a different search term.`
-                : "Be the first to join! Sign in with your SIAKAD credentials."}
+                : 'Be the first to join! Sign in with your SIAKAD credentials.'}
             </p>
           </CardContent>
         </Card>
@@ -180,9 +168,9 @@ function MemberCard({ member }: { member: PublicProfile }) {
                 <Badge
                   variant="secondary"
                   className={`text-[10px] ${
-                    member.role === "faculty"
-                      ? "bg-orange-50 text-orange-700"
-                      : "bg-primary-50 text-primary-700 dark:bg-neutral-800 dark:text-white"
+                    member.role === 'faculty'
+                      ? 'bg-orange-50 text-orange-700'
+                      : 'bg-primary-50 text-primary-700 dark:bg-neutral-800 dark:text-white'
                   }`}
                 >
                   {member.role}
@@ -197,9 +185,7 @@ function MemberCard({ member }: { member: PublicProfile }) {
           </div>
 
           {member.bio && (
-            <p className="text-sm text-gray-500 dark:text-white mt-3 line-clamp-2">
-              {member.bio}
-            </p>
+            <p className="text-sm text-gray-500 dark:text-white mt-3 line-clamp-2">{member.bio}</p>
           )}
 
           {/* Stats */}

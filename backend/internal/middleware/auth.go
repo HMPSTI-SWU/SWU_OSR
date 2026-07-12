@@ -66,6 +66,20 @@ func JWTAuth(secret string) func(http.Handler) http.Handler {
 	}
 }
 
+// RequireSuperAdmin is a middleware that allows only users with the super_admin role.
+// It must be chained after JWTAuth so that UserClaims are already in context.
+func RequireSuperAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		claims, ok := domain.GetUserClaims(r.Context())
+		if !ok || claims.Role != domain.RoleSuperAdmin {
+			handler.RespondError(w, http.StatusForbidden, "super admin access required")
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+
 func extractToken(r *http.Request) string {
 	// Check Authorization header first
 	authHeader := r.Header.Get("Authorization")

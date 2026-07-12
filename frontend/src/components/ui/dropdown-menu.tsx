@@ -1,19 +1,15 @@
-"use client";
+'use client';
 
-import * as React from "react";
-import { cn } from "@/lib/utils";
+import * as React from 'react';
+import { cn } from '@/lib/utils';
 
 interface DropdownMenuProps {
   trigger: React.ReactNode;
   children: React.ReactNode;
-  align?: "left" | "right";
+  align?: 'left' | 'right';
 }
 
-function DropdownMenu({
-  trigger,
-  children,
-  align = "right",
-}: DropdownMenuProps) {
+function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const ref = React.useRef<HTMLDivElement>(null);
 
@@ -23,8 +19,8 @@ function DropdownMenu({
         setOpen(false);
       }
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   return (
@@ -33,8 +29,8 @@ function DropdownMenu({
       {open && (
         <div
           className={cn(
-            "absolute z-50 mt-2 min-w-[200px] rounded-geist-sm bg-geist-canvas dark:bg-neutral-900 geist-level-5 py-1 animate-scale-in",
-            align === "right" ? "right-0" : "left-0"
+            'absolute z-50 mt-2 min-w-[200px] rounded-geist-sm bg-geist-canvas dark:bg-neutral-900 geist-level-5 py-1 animate-scale-in',
+            align === 'right' ? 'right-0' : 'left-0'
           )}
         >
           {children}
@@ -44,14 +40,11 @@ function DropdownMenu({
   );
 }
 
-function DropdownMenuItem({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function DropdownMenuItem({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
       className={cn(
-        "cursor-pointer px-3 py-2 text-body-sm text-geist-ink hover:bg-geist-canvas-soft-2 transition-colors dark:text-white dark:hover:bg-neutral-800",
+        'cursor-pointer px-3 py-2 text-body-sm text-geist-ink hover:bg-geist-canvas-soft-2 transition-colors dark:text-white dark:hover:bg-neutral-800',
         className
       )}
       {...props}

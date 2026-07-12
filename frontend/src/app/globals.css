@@ -9,67 +9,29 @@
 
   body {
     @apply bg-geist-canvas-soft text-geist-ink antialiased dark:bg-black dark:text-white;
-    font-feature-settings: "ss01", "ss02";
+    font-feature-settings: 'ss01', 'ss02';
   }
 }
 
 @layer components {
   /* Geist Brand Mesh Gradient — hero scale only */
   .geist-mesh-gradient {
-    background: radial-gradient(
-        ellipse 80% 60% at 30% 40%,
-        rgba(0, 124, 240, 0.15) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 60% 30%,
-        rgba(0, 223, 216, 0.12) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 50% 60% at 70% 60%,
-        rgba(121, 40, 202, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 50% 70%,
-        rgba(255, 0, 128, 0.08) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 40% 40% at 80% 80%,
-        rgba(249, 203, 40, 0.06) 0%,
-        transparent 40%
-      );
+    background:
+      radial-gradient(ellipse 80% 60% at 30% 40%, rgba(0, 124, 240, 0.15) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 60% 30%, rgba(0, 223, 216, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 60% at 70% 60%, rgba(121, 40, 202, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 50% at 50% 70%, rgba(255, 0, 128, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(249, 203, 40, 0.06) 0%, transparent 40%);
   }
 
   /* Dark mode mesh gradient — more vibrant against dark bg */
   :is(.dark) .geist-mesh-gradient {
-    background: radial-gradient(
-        ellipse 80% 60% at 30% 40%,
-        rgba(0, 124, 240, 0.2) 0%,
-        transparent 60%
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 60% 30%,
-        rgba(0, 223, 216, 0.15) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 50% 60% at 70% 60%,
-        rgba(121, 40, 202, 0.15) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 60% 50% at 50% 70%,
-        rgba(255, 0, 128, 0.1) 0%,
-        transparent 50%
-      ),
-      radial-gradient(
-        ellipse 40% 40% at 80% 80%,
-        rgba(249, 203, 40, 0.08) 0%,
-        transparent 40%
-      );
+    background:
+      radial-gradient(ellipse 80% 60% at 30% 40%, rgba(0, 124, 240, 0.2) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 60% 30%, rgba(0, 223, 216, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 60% at 70% 60%, rgba(121, 40, 202, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 50% at 50% 70%, rgba(255, 0, 128, 0.1) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(249, 203, 40, 0.08) 0%, transparent 40%);
   }
 
   /* Geist Elevation Levels — Light Mode */
@@ -82,24 +44,29 @@
   }
 
   .geist-level-2 {
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.02),
-      0px 2px 2px rgba(0, 0, 0, 0.04), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+    box-shadow:
+      0px 1px 1px rgba(0, 0, 0, 0.02),
+      0px 2px 2px rgba(0, 0, 0, 0.04),
+      inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
   .geist-level-3 {
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.04),
+    box-shadow:
+      0px 2px 2px rgba(0, 0, 0, 0.04),
       0px 8px 8px -8px rgba(0, 0, 0, 0.04),
       inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
   .geist-level-4 {
-    box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.04),
+    box-shadow:
+      0px 2px 2px rgba(0, 0, 0, 0.04),
       0px 8px 16px -4px rgba(0, 0, 0, 0.04),
       inset 0 0 0 1px rgba(0, 0, 0, 0.08);
   }
 
   .geist-level-5 {
-    box-shadow: 0px 1px 1px rgba(0, 0, 0, 0.02),
+    box-shadow:
+      0px 1px 1px rgba(0, 0, 0, 0.02),
       0px 8px 16px -4px rgba(0, 0, 0, 0.04),
       0px 24px 32px -8px rgba(0, 0, 0, 0.06),
       inset 0 0 0 1px rgba(0, 0, 0, 0.08);
@@ -115,22 +82,26 @@
   }
 
   :is(.dark) .geist-level-2 {
-    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.4),
+    box-shadow:
+      0px 1px 2px rgba(0, 0, 0, 0.4),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
   :is(.dark) .geist-level-3 {
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.3),
+    box-shadow:
+      0px 2px 4px rgba(0, 0, 0, 0.3),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
   :is(.dark) .geist-level-4 {
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4),
+    box-shadow:
+      0px 4px 8px rgba(0, 0, 0, 0.4),
       inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
 
   :is(.dark) .geist-level-5 {
-    box-shadow: 0px 8px 24px rgba(0, 0, 0, 0.5),
+    box-shadow:
+      0px 8px 24px rgba(0, 0, 0, 0.5),
       inset 0 0 0 1px rgba(255, 255, 255, 0.1);
   }
 }
@@ -244,4 +215,14 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-geist-hairline-strong dark:bg-neutral-600;
+}
+
+/* Badge shimmer animation — Diamond tier */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(200%);
+  }
 }

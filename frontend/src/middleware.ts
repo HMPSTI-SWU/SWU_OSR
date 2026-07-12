@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 /**
  * Edge middleware that handles the root "/" redirect BEFORE any HTML is
@@ -19,19 +19,19 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Only intercept the root path
-  if (pathname !== "/") {
+  if (pathname !== '/') {
     return NextResponse.next();
   }
 
-  const hasRefreshToken = request.cookies.has("refresh_token");
+  const hasRefreshToken = request.cookies.has('refresh_token');
 
   const url = request.nextUrl.clone();
-  url.pathname = hasRefreshToken ? "/dashboard" : "/welcome";
+  url.pathname = hasRefreshToken ? '/dashboard' : '/welcome';
 
   return NextResponse.redirect(url);
 }
 
 export const config = {
   // Only run middleware on the root path
-  matcher: ["/"],
+  matcher: ['/'],
 };

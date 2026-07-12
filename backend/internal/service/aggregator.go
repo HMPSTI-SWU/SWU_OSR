@@ -316,7 +316,8 @@ func (s *aggregatorService) verifySignature(payload []byte, signature string) bo
 func (s *aggregatorService) parsePushEvent(payload []byte) (repoFullName, username, summary string, metadata json.RawMessage) {
 	var event struct {
 		Repository struct {
-			FullName string `json:"full_name"`
+			FullName       string `json:"full_name"`
+			StargazersCount int   `json:"stargazers_count"`
 		} `json:"repository"`
 		Pusher struct {
 			Name string `json:"name"`
@@ -352,10 +353,20 @@ func (s *aggregatorService) parsePushEvent(payload []byte) (repoFullName, userna
 		"ref":          event.Ref,
 		"commit_count": commitCount,
 		"commits":      commits,
+		// repo_stars digunakan oleh scoring engine untuk menghitung multiplier reputasi
+		"repo_stars":   sanitizeStars(event.Repository.StargazersCount),
 	}
 	metadata, _ = json.Marshal(meta)
 
 	return event.Repository.FullName, event.Pusher.Name, summary, metadata
+}
+
+// sanitizeStars mencegah nilai negatif dari payload GitHub yang tidak valid.
+func sanitizeStars(n int) int {
+	if n < 0 {
+		return 0
+	}
+	return n
 }
 
 // parsePREvent extracts data from a pull_request event payload.
@@ -364,11 +375,13 @@ func (s *aggregatorService) parsePREvent(payload []byte) (repoFullName, username
 		Action string `json:"action"`
 		Number int    `json:"number"`
 		Repository struct {
-			FullName string `json:"full_name"`
+			FullName        string `json:"full_name"`
+			StargazersCount int    `json:"stargazers_count"`
 		} `json:"repository"`
 		PullRequest struct {
-			Title string `json:"title"`
-			User  struct {
+			Title  string `json:"title"`
+			Merged bool   `json:"merged"`
+			User   struct {
 				Login string `json:"login"`
 			} `json:"user"`
 		} `json:"pull_request"`
@@ -380,10 +393,15 @@ func (s *aggregatorService) parsePREvent(payload []byte) (repoFullName, username
 
 	summary = fmt.Sprintf("PR #%d %s: %s", event.Number, event.Action, event.PullRequest.Title)
 
+	stars := sanitizeStars(event.Repository.StargazersCount)
+
 	meta := map[string]interface{}{
-		"action": event.Action,
-		"number": event.Number,
-		"title":  event.PullRequest.Title,
+		"action":     event.Action,
+		"number":     event.Number,
+		"title":      event.PullRequest.Title,
+		"merged":     event.PullRequest.Merged,
+		// repo_stars digunakan oleh scoring engine untuk menghitung multiplier reputasi
+		"repo_stars": stars,
 	}
 	metadata, _ = json.Marshal(meta)
 
