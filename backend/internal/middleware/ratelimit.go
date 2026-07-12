@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -94,14 +95,34 @@ func (rl *RateLimiter) cleanupLoop() {
 	}
 }
 
+// getClientIP extracts the real client IP from the request.
+// Since the backend is behind an nginx reverse proxy, r.RemoteAddr will always
+// return the nginx container IP, not the actual client. We trust the
+// X-Real-IP header set by nginx (configured with proxy_set_header X-Real-IP).
+func getClientIP(r *http.Request) string {
+	// X-Real-IP is set explicitly by nginx: proxy_set_header X-Real-IP $remote_addr
+	if ip := r.Header.Get("X-Real-IP"); ip != "" {
+		return strings.TrimSpace(ip)
+	}
+	// X-Forwarded-For fallback: take the first (leftmost) IP which is the client
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		return strings.TrimSpace(strings.SplitN(xff, ",", 2)[0])
+	}
+	// Last resort: use RemoteAddr (strips port)
+	if host, _, found := strings.Cut(r.RemoteAddr, ":"); found {
+		return host
+	}
+	return r.RemoteAddr
+}
+
 // IPMiddleware returns an HTTP middleware that enforces IP-based rate limiting only.
 // This should be applied globally before auth middleware.
 func (rl *RateLimiter) IPMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		// Rate limit by IP
-		ip := r.RemoteAddr
+		// Rate limit by real client IP (not the nginx proxy IP)
+		ip := getClientIP(r)
 		key := fmt.Sprintf("ratelimit:ip:%s", ip)
 		if !rl.allow(ctx, key, rl.ipLimit) {
 			handler.RespondError(w, http.StatusTooManyRequests, "rate limit exceeded")

@@ -337,36 +337,44 @@ echo -e "${GREEN}  ✓ nginx/nginx.prod.conf berhasil dibuat${NC}"
 
 # ── [5/7] Request SSL Certificate ────────────────────────────────────────────
 echo ""
-echo -e "${YELLOW}[5/7] Meminta SSL certificate dari Let's Encrypt ...${NC}"
-echo -e "${CYAN}  (Pastikan domain ${DOMAIN} sudah mengarah ke IP server ini!)${NC}"
-echo -e "${CYAN}  (Port 80 harus terbuka di firewall)${NC}"
-echo ""
+echo -e "${YELLOW}[5/7] Mengecek SSL certificate ...${NC}"
 
-# Stop container yang mungkin memakai port 80
-docker compose -f docker-compose.yml -f docker-compose.prod.yml down 2>/dev/null || true
+CERT_PATH="$(pwd)/certbot/conf/live/${DOMAIN}/fullchain.pem"
 
-# Jalankan certbot standalone untuk mendapatkan sertifikat
-docker run --rm \
-    -v "$(pwd)/certbot/conf:/etc/letsencrypt" \
-    -v "$(pwd)/certbot/www:/var/www/certbot" \
-    -p 80:80 \
-    certbot/certbot certonly \
-        --standalone \
-        --non-interactive \
-        --agree-tos \
-        --email "${EMAIL}" \
-        -d "${DOMAIN}" \
-        --force-renewal
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}  ✓ SSL certificate berhasil didapatkan!${NC}"
+if [ -f "${CERT_PATH}" ]; then
+    echo -e "${GREEN}  ✓ Sertifikat SSL sudah ada untuk ${DOMAIN}, skip request baru.${NC}"
+    echo -e "${CYAN}    (Sertifikat akan diperbarui otomatis oleh certbot renewal)${NC}"
 else
-    echo -e "${RED}  ✗ Gagal mendapatkan SSL certificate!${NC}"
-    echo -e "${RED}    Pastikan:${NC}"
-    echo -e "${RED}    - Domain ${DOMAIN} sudah mengarah ke IP server ini (A record)${NC}"
-    echo -e "${RED}    - Port 80 tidak dipakai proses lain${NC}"
-    echo -e "${RED}    - Firewall membuka port 80 dan 443${NC}"
-    exit 1
+    echo -e "${CYAN}  Meminta SSL certificate dari Let's Encrypt ...${NC}"
+    echo -e "${CYAN}  (Pastikan domain ${DOMAIN} sudah mengarah ke IP server ini!)${NC}"
+    echo -e "${CYAN}  (Port 80 harus terbuka di firewall)${NC}"
+    echo ""
+
+    # Stop container yang mungkin memakai port 80
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml down 2>/dev/null || true
+
+    # Jalankan certbot standalone untuk mendapatkan sertifikat
+    docker run --rm \
+        -v "$(pwd)/certbot/conf:/etc/letsencrypt" \
+        -v "$(pwd)/certbot/www:/var/www/certbot" \
+        -p 80:80 \
+        certbot/certbot certonly \
+            --standalone \
+            --non-interactive \
+            --agree-tos \
+            --email "${EMAIL}" \
+            -d "${DOMAIN}"
+
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}  ✓ SSL certificate berhasil didapatkan!${NC}"
+    else
+        echo -e "${RED}  ✗ Gagal mendapatkan SSL certificate!${NC}"
+        echo -e "${RED}    Pastikan:${NC}"
+        echo -e "${RED}    - Domain ${DOMAIN} sudah mengarah ke IP server ini (A record)${NC}"
+        echo -e "${RED}    - Port 80 tidak dipakai proses lain${NC}"
+        echo -e "${RED}    - Firewall membuka port 80 dan 443${NC}"
+        exit 1
+    fi
 fi
 
 # ── [6/7] Generate docker-compose.ssl.yml ────────────────────────────────────

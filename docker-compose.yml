@@ -3,12 +3,13 @@ services:
     image: postgres:16-alpine
     # Enable WAL archiving for incremental backups
     # See: backup/backup.sh for the full backup workflow
+    # archive_timeout=300: RPO 5 menit (sebelumnya 3600 = 1 jam data loss jika crash)
     command: >
       postgres
       -c wal_level=replica
       -c archive_mode=on
       -c archive_command='test ! -f /backups/wal/%f && cp %p /backups/wal/%f'
-      -c archive_timeout=3600
+      -c archive_timeout=300
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

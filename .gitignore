@@ -156,6 +156,8 @@ bin/
 # -----------------------------------------------------------------------------
 monitoring/grafana/data/
 monitoring/prometheus/data/
+# Monitoring secrets — JANGAN commit password Grafana
+monitoring/.env
 
 # -----------------------------------------------------------------------------
 # Miscellaneous

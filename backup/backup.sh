@@ -25,6 +25,7 @@
 # ============================================================================
 
 set -euo pipefail
+umask 077  # Harden: semua file/dir backup hanya bisa dibaca oleh pemiliknya (root)
 
 # ── Resolve paths ─────────────────────────────────────────────────────────────
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -88,22 +89,34 @@ cmd_base() {
     local backup_path="${BACKUP_LOCAL_DIR}/base/${timestamp}"
 
     # Run pg_basebackup inside the PostgreSQL container
+    # Gunakan zstd jika tersedia (jauh lebih cepat dari gzip), fallback ke gzip
     log_info "Running pg_basebackup (this may take a few minutes)..."
+    local compress_flag="-z"  # default: gzip
+    if docker exec "${PG_CONTAINER}" pg_basebackup --help 2>&1 | grep -q 'zstd'; then
+        compress_flag="-Z zstd"
+        log_info "Compression: zstd (fast multi-threaded)"
+    else
+        log_info "Compression: gzip (fallback, zstd tidak tersedia)"
+    fi
+
+    set +e
     docker exec "${PG_CONTAINER}" \
         pg_basebackup \
             -U "${PG_USER}" \
             -D "/backups/base/${timestamp}" \
             -Ft \
-            -z \
+            ${compress_flag} \
             -Xs \
             -P \
             -v 2>&1 | while IFS= read -r line; do
                 log_info "  pg_basebackup: $line"
             done
+    local pg_status=${PIPESTATUS[0]}
+    set -e
 
-    if [ ${PIPESTATUS[0]} -eq 0 ]; then
+    if [ "$pg_status" -eq 0 ]; then
         local size
-        size=$(du -sh "$backup_path" 2>/dev/null | cut -f1)
+        size=$(du -sh "$backup_path" 2>/dev/null | cut -f1 || echo "unknown")
         log_info "Base backup completed: ${backup_path} (${size})"
     else
         log_error "Base backup FAILED!"
@@ -119,7 +132,13 @@ cmd_base() {
     uploads_volume=$(docker volume inspect swu_osr_uploads --format '{{ .Mountpoint }}' 2>/dev/null || echo "")
 
     if [ -n "$uploads_volume" ] && [ -d "$uploads_volume" ]; then
-        tar czf "$uploads_archive" -C "$uploads_volume" . 2>/dev/null || true
+        # Gunakan pigz (parallel gzip) jika tersedia untuk kompresi multi-core
+        if command -v pigz &>/dev/null; then
+            tar -I pigz -cf "$uploads_archive" -C "$uploads_volume" . 2>/dev/null || true
+            log_info "Compression: pigz (multi-core)"
+        else
+            tar czf "$uploads_archive" -C "$uploads_volume" . 2>/dev/null || true
+        fi
         local uploads_size
         uploads_size=$(du -sh "$uploads_archive" 2>/dev/null | cut -f1)
         log_info "Uploads backup: ${uploads_archive} (${uploads_size})"
@@ -177,8 +196,9 @@ cmd_sync() {
 
     if rclone sync \
         ${rclone_opts} \
-        --transfers=4 \
-        --checkers=8 \
+        --transfers=8 \
+        --checkers=16 \
+        --fast-list \
         --low-level-retries=3 \
         --stats-one-line \
         --stats=0 \
@@ -287,25 +307,30 @@ cmd_status() {
     fi
 
     # ── WAL archiving status ──────────────────────────────────────────────
+    # Optimasi: gabungkan 4x docker exec menjadi 1x query untuk menghilangkan
+    # round-trip overhead (~300ms per pemanggilan)
     echo ""
     echo -e "${YELLOW}PostgreSQL WAL Archiving:${NC}"
-    if docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc "SHOW archive_mode;" 2>/dev/null | grep -q "on"; then
-        echo -e "  Status: ${GREEN}ACTIVE${NC}"
-        local last_archived
-        last_archived=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
-            "SELECT last_archived_wal FROM pg_stat_archiver;" 2>/dev/null)
-        local archive_count
-        archive_count=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
-            "SELECT archived_count FROM pg_stat_archiver;" 2>/dev/null)
-        local failed_count
-        failed_count=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
-            "SELECT failed_count FROM pg_stat_archiver;" 2>/dev/null)
-        echo "  Last archived WAL: ${last_archived:-none}"
-        echo "  Total archived:    ${archive_count:-0}"
-        echo "  Failed:            ${failed_count:-0}"
+    local pg_stats_raw
+    pg_stats_raw=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
+        "SELECT current_setting('archive_mode'), last_archived_wal, archived_count, failed_count \
+         FROM pg_stat_archiver;" 2>/dev/null || echo "")
+
+    if [ -n "$pg_stats_raw" ]; then
+        local arc_mode last_wal arc_count fail_count
+        IFS='|' read -r arc_mode last_wal arc_count fail_count <<< "$pg_stats_raw"
+        arc_mode=$(echo "$arc_mode" | xargs)  # trim whitespace
+        if [ "$arc_mode" = "on" ]; then
+            echo -e "  Status: ${GREEN}ACTIVE${NC}"
+        else
+            echo -e "  Status: ${RED}INACTIVE${NC}"
+            echo "  Run: docker compose up -d postgres (with WAL config)"
+        fi
+        echo "  Last archived WAL: ${last_wal:-none}"
+        echo "  Total archived:    ${arc_count:-0}"
+        echo "  Failed:            ${fail_count:-0}"
     else
-        echo -e "  Status: ${RED}INACTIVE${NC}"
-        echo "  Run: docker compose up -d postgres (with WAL config)"
+        echo -e "  Status: ${RED}INACTIVE${NC} (cannot connect to PostgreSQL container)"
     fi
 
     echo ""
@@ -319,52 +344,64 @@ cmd_verify() {
 
     local errors=0
 
-    # Check archive_mode
-    local archive_mode
-    archive_mode=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc "SHOW archive_mode;" 2>/dev/null)
-    if [ "$archive_mode" = "on" ]; then
-        log_info "archive_mode = on ✓"
-    else
-        log_error "archive_mode = ${archive_mode:-unknown} ✗"
+    # Optimasi: gabungkan semua query psql menjadi 1x docker exec
+    # untuk menghilangkan overhead pemanggilan berulang
+    local pg_verify_raw
+    pg_verify_raw=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
+        "SELECT current_setting('archive_mode'), current_setting('wal_level'), \
+               current_setting('archive_command'), \
+               failed_count \
+         FROM pg_stat_archiver;" 2>/dev/null || echo "")
+
+    if [ -z "$pg_verify_raw" ]; then
+        log_error "Cannot connect to PostgreSQL container: ${PG_CONTAINER} ✗"
         ((errors++))
+    else
+        local archive_mode wal_level archive_command failed_count
+        IFS='|' read -r archive_mode wal_level archive_command failed_count <<< "$pg_verify_raw"
+        archive_mode=$(echo "$archive_mode" | xargs)
+        wal_level=$(echo "$wal_level" | xargs)
+        archive_command=$(echo "$archive_command" | xargs)
+        failed_count=$(echo "$failed_count" | xargs)
+
+        # Check archive_mode
+        if [ "$archive_mode" = "on" ]; then
+            log_info "archive_mode = on ✓"
+        else
+            log_error "archive_mode = ${archive_mode:-unknown} ✗"
+            ((errors++))
+        fi
+
+        # Check wal_level
+        if [ "$wal_level" = "replica" ] || [ "$wal_level" = "logical" ]; then
+            log_info "wal_level = ${wal_level} ✓"
+        else
+            log_error "wal_level = ${wal_level:-unknown} ✗ (needs 'replica' or 'logical')"
+            ((errors++))
+        fi
+
+        # Check archive_command
+        if [ -n "$archive_command" ]; then
+            log_info "archive_command = '${archive_command}' ✓"
+        else
+            log_error "archive_command is empty ✗"
+            ((errors++))
+        fi
+
+        # Check archiver stats
+        if [ "${failed_count:-0}" = "0" ]; then
+            log_info "No archive failures ✓"
+        else
+            log_warn "Archive failures detected: ${failed_count}"
+        fi
     fi
 
-    # Check wal_level
-    local wal_level
-    wal_level=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc "SHOW wal_level;" 2>/dev/null)
-    if [ "$wal_level" = "replica" ] || [ "$wal_level" = "logical" ]; then
-        log_info "wal_level = ${wal_level} ✓"
-    else
-        log_error "wal_level = ${wal_level:-unknown} ✗ (needs 'replica' or 'logical')"
-        ((errors++))
-    fi
-
-    # Check archive_command
-    local archive_command
-    archive_command=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc "SHOW archive_command;" 2>/dev/null)
-    if [ -n "$archive_command" ]; then
-        log_info "archive_command = '${archive_command}' ✓"
-    else
-        log_error "archive_command is empty ✗"
-        ((errors++))
-    fi
-
-    # Check WAL directory exists inside container
-    if docker exec "${PG_CONTAINER}" test -d /backups/wal; then
+    # Check WAL directory exists inside container (masih perlu exec terpisah)
+    if docker exec "${PG_CONTAINER}" test -d /backups/wal 2>/dev/null; then
         log_info "/backups/wal directory exists ✓"
     else
         log_error "/backups/wal directory missing ✗"
         ((errors++))
-    fi
-
-    # Check archiver stats
-    local failed_count
-    failed_count=$(docker exec "${PG_CONTAINER}" psql -U "${PG_USER}" -tAc \
-        "SELECT failed_count FROM pg_stat_archiver;" 2>/dev/null)
-    if [ "${failed_count:-0}" = "0" ]; then
-        log_info "No archive failures ✓"
-    else
-        log_warn "Archive failures detected: ${failed_count}"
     fi
 
     # Force a WAL switch to test archiving
