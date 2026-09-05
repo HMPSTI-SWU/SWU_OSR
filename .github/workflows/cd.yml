@@ -1,20 +1,17 @@
 name: CD to VPS
 
 on:
-  push:
-    branches: [main]
-  workflow_run:
-    workflows: ["CI"]
-    types:
-      - completed
-    branches: [main]
+  # Deploy hanya dipicu saat GitHub Release baru dipublish oleh semantic-release
+  # Ini memastikan versi yang ter-deploy ke VPS selalu punya tag yang jelas (misal: v1.2.3)
+  release:
+    types: [published]
 
 jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
-    # Hanya jalan jika CI sukses (jika dijalankan via workflow_run) atau via push langsung
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    # Hanya jalan di upstream, bukan fork (konsisten dengan release.yml)
+    if: github.repository == 'HMPSTI-SWU/SWU_OSR'
 
     steps:
       - name: Deploy via SSH
@@ -23,22 +20,23 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }} # Biasanya 22
+          port: ${{ secrets.VPS_PORT }}
           script: |
-            # Pindah ke direktori proyek (sesuaikan path ini melalui rahasia atau hardcode jika pasti)
             cd ${{ secrets.PROJECT_PATH }}
-            
+
+            echo "=== Deploy Release ${{ github.event.release.tag_name }} ==="
+
             echo "1. Menarik kode terbaru dari GitHub..."
-            git pull origin main
-            
+            git fetch --tags
+            git checkout ${{ github.event.release.tag_name }}
+
             echo "2. Build ulang Docker images..."
-            # Asumsi menggunakan docker-compose.ssl.yml hasil generate dari deploy.sh
             sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ssl.yml build
-            
+
             echo "3. Menjalankan container dengan kode terbaru..."
             sudo docker compose -f docker-compose.yml -f docker-compose.prod.yml -f docker-compose.ssl.yml up -d
-            
+
             echo "4. Membersihkan image Docker yang tidak terpakai (dangling)..."
             sudo docker image prune -f
-            
-            echo "Deployment Selesai!"
+
+            echo "=== Deployment ${{ github.event.release.tag_name }} Selesai! ==="

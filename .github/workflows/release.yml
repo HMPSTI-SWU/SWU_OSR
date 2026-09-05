@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# Hanya jalan di upstream, BUKAN di fork
+# Ini mencegah versioning ganda antara fork dan upstream
+jobs:
+  release:
+    name: Semantic Release
+    runs-on: ubuntu-latest
+    # ⚠️ KUNCI: Hanya eksekusi di repo upstream, bukan fork
+    if: github.repository == 'HMPSTI-SWU/SWU_OSR'
+
+    permissions:
+      contents: write       # Untuk push CHANGELOG.md & git tag
+      issues: write         # Untuk komentar di issue yang di-close
+      pull-requests: write  # Untuk komentar di PR yang masuk release
+
+    steps:
+      - name: Checkout repository (full history)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Butuh full history untuk semantic-release menganalisis semua commit
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Semantic Release
+        uses: cycjimmy/semantic-release-action@v4
+        with:
+          extra_plugins: |
+            @semantic-release/changelog
+            @semantic-release/git
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
